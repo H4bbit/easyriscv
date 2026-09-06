@@ -1,0 +1,11 @@
+# build artifacts
+vm
+*.o
+*.elf
+*.bin
+*.lst
+# tmp
+/tmp/
+# OS
+.DS_Store
+*~
