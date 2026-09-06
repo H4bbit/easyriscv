@@ -20,24 +20,24 @@ _start:
     addi sp, sp, -4
     sw t0, 0(sp)       // push 33 (top)
 
-    // pop in reverse and write to framebuffer at 0x200
+    // pop in reverse and write to framebuffer at 0x200 (1 byte/pixel)
     li t1, 0x200
     lw t0, 0(sp)       // pop 33
     addi sp, sp, 4
-    sw t0, 0(t1)
+    sb t0, 0(t1)
 
     lw t0, 0(sp)       // pop 22
     addi sp, sp, 4
-    sw t0, 4(t1)
+    sb t0, 1(t1)
 
     lw t0, 0(sp)       // pop 11
     addi sp, sp, 4
-    sw t0, 8(t1)
+    sb t0, 2(t1)
 
     // Stack should be back at 0x900
-    // Write sp low byte to FB[3] for visual check
+    // Write sp low nibble to FB[3] for visual check
     andi t0, sp, 0xF
-    sw t0, 12(t1)
+    sb t0, 3(t1)
 
     j .
 

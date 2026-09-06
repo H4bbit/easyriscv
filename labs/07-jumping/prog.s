@@ -8,18 +8,18 @@ _start:
     jal ra, inc_one   // JSR inc_one
     // t0 should be 1 here
     li t1, 0x200
-    sw t0, 0(t1)       // FB[0] = 1
+    sb t0, 0(t1)       // FB[0] = 1 (1 byte/pixel)
 
     j after           // JMP (jal x0)
     li t0, 99         // skipped
 after:
     addi t0, t0, 4    // t0 = 5
-    sw t0, 4(t1)      // FB[1] = 5
+    sb t0, 1(t1)      // FB[1] = 5
 
     // nested call test: save ra on stack
     li sp, 0x900
     jal ra, outer
-    sw t0, 8(t1)      // FB[2] should be 15 (5 +1 +9? see below)
+    sb t0, 2(t1)      // FB[2] should be 15
     j .
 
 inc_one:

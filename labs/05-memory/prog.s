@@ -22,13 +22,13 @@ _start:
     lw t5, 4(t0)      // t5 = *0x304 (99)
     add t4, t4, t5    // t4 = 141
     li s0, 0x200      // FB base (keep separate reg)
-    sw t4, 0(s0)      // FB[0] = 141 & 0xF = 13 (light green)
+    sb t4, 0(s0)      // FB[0] = 141 & 0xF = 13 (light green) - 1 byte/pixel
 
     // byte store/load
     li t1, 0xAB
     sb t1, 12(t0)     // byte at 0x30C
     lbu s1, 12(t0)    // load byte unsigned -> s1=171
-    sw s1, 4(s0)      // FB[1] = 171 & 0xF = 11 (dark grey)
+    sb s1, 1(s0)      // FB[1] = 171 & 0xF = 11 (dark grey)
 
     j .
 

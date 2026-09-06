@@ -38,12 +38,9 @@ int main(int argc, char **argv){
             uint32_t v = cpu.mem[0x300+i*4] | (cpu.mem[0x300+i*4+1]<<8) | (cpu.mem[0x300+i*4+2]<<16) | (cpu.mem[0x300+i*4+3]<<24);
             printf(" %u", v);
         }
-        printf("\nFramebuffer 0x200 (words):");
-        for(int i=0;i<4;i++){
-            uint32_t v = cpu.mem[0x200+i*4] | (cpu.mem[0x200+i*4+1]<<8) | (cpu.mem[0x200+i*4+2]<<16) | (cpu.mem[0x200+i*4+3]<<24);
-            printf(" %u", v & 0xF);
-        }
-        printf(" raw bytes: %02x %02x %02x %02x\n", cpu.mem[0x200], cpu.mem[0x204], cpu.mem[0x208], cpu.mem[0x20c]);
+        printf("\nFramebuffer 0x200 (bytes, 1 byte/pixel):");
+        for(int i=0;i<8;i++) printf(" %u", cpu.mem[0x200+i] & 0xF);
+        printf(" raw: %02x %02x %02x %02x\n", cpu.mem[0x200], cpu.mem[0x201], cpu.mem[0x202], cpu.mem[0x203]);
         return 0;
     }
 
