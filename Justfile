@@ -1,13 +1,22 @@
-set shell := ["bash","-cu"]
+set shell := ["bash", "-cu"]
 
 vm := "vm"
 bindir := "/data/data/com.termux/files/usr/tmp"
+cc := "clang"
+cflags := "-O2 -Wall -Wextra -I."
+ldflags := "-lncursesw"
 
-# Build VM
+# Build VM (replaces Makefile)
 build:
-    make -C . -j4
+    {{cc}} {{cflags}} -c vm.c -o vm.o
+    {{cc}} {{cflags}} -c ui.c -o ui.o
+    {{cc}} {{cflags}} -c main.c -o main.o
+    {{cc}} -o {{vm}} vm.o ui.o main.o {{ldflags}}
 
-# Lab helper: monta prog.s -> bin em /tmp e roda
+clean:
+    rm -f vm.o ui.o main.o {{vm}} {{bindir}}/*.elf {{bindir}}/*.bin
+
+# Assemble lab: prog.s -> elf -> bin
 assemble lab="01-pixel":
     #!/bin/bash
     set -e
@@ -22,24 +31,23 @@ assemble lab="01-pixel":
     echo "size $(wc -c < $bin) bytes"
 
 run lab="01-pixel": (assemble lab)
-    ./vm {{bindir}}/{{lab}}.bin --headless
+    ./{{vm}} {{bindir}}/{{lab}}.bin --headless
 
 debug lab="01-pixel": (assemble lab)
-    ./vm {{bindir}}/{{lab}}.bin
+    ./{{vm}} {{bindir}}/{{lab}}.bin
 
-# todos labs
+# Run all labs headless
 all:
-    just assemble 01-pixel
-    just run 01-pixel
-    just assemble 02-fib
-    just run 02-fib
-    just assemble 03-fib-ram
-    just run 03-fib-ram
+    just assemble 01-pixel && just run 01-pixel
+    just assemble 02-fib && just run 02-fib
+    just assemble 03-fib-ram && just run 03-fib-ram
 
-# inspeção igual linux_user_mode
+# Inspection (like linux_user_mode)
 disasm lab="01-pixel":
     llvm-objdump -d {{bindir}}/{{lab}}.elf
+
 elf lab="01-pixel":
     llvm-readelf -h -S -l {{bindir}}/{{lab}}.elf
+
 hex lab="01-pixel":
     xxd {{bindir}}/{{lab}}.bin
