@@ -49,7 +49,6 @@ int main(int argc, char **argv){
 
     UI ui;
     ui_init(&ui);
-    bool running=false;
     while(1){
         ui_draw(&ui,&cpu);
         if(cpu.halted){
@@ -59,7 +58,7 @@ int main(int argc, char **argv){
         }
         int cmd = ui_handle_input();
         if(cmd==3) break;
-        if(cmd==2){ cpu_reset(&cpu); cpu_load_bin(&cpu,bin); running=false; continue; }
+        if(cmd==2){ cpu_reset(&cpu); cpu_load_bin(&cpu,bin); continue; }
         if(cmd==1){ // run até halt
             nodelay(stdscr, TRUE);
             while(!cpu.halted){

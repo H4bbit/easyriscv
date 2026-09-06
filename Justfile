@@ -3,7 +3,7 @@ set shell := ["bash", "-cu"]
 vm := "vm"
 bindir := "/data/data/com.termux/files/usr/tmp"
 cc := "clang"
-cflags := "-O2 -Wall -Wextra -I."
+cflags := "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -fcolor-diagnostics -I."
 ldflags := "-lncursesw"
 
 # Build VM (replaces Makefile)
