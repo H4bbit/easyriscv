@@ -24,15 +24,23 @@ just clean             # remove artifacts
 - `05-memory` - lw/sw/sb/lbu
 - `06-stack` - manual sp push/pop
 - `07-jumping` - jal/jalr nested calls
+- `08-alu` - and/or/xor masking (random at 0xFE)
+- `09-snake` - Snake capstone (draft, infinite loop)
 
 ## Book
 
 - `book/00-intro.md` - intro
+- `book/01-numbers.md` - hex and immediates
+- `book/01-toolchain.md` - clang/llvm flow
 - `book/02-first-pixel.md` - first program
 - `book/03-registers.md` - register file
 - `book/04-branching.md` - branching
 - `book/05-memory.md` - memory
 - `book/06-stack.md` - stack
 - `book/07-jumping.md` - jumping
+
+## Solutions
+
+- `solutions/` - exercise solutions per lab (01-pixel, 04-branching, 05-memory)
 
 Requires: `clang`, `llvm`, `ncursesw`, `just`.

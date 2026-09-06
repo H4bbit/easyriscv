@@ -8,13 +8,19 @@
 
 int main(int argc, char **argv){
     if(argc<2){
-        fprintf(stderr,"Usage: %s <bin> [--headless]\n", argv[0]);
+        fprintf(stderr,"Usage: %s <bin> [--headless] [--steps N]\n", argv[0]);
         fprintf(stderr,"Ex: %s /tmp/fib.bin\n", argv[0]);
         fprintf(stderr,"    %s /tmp/fib.bin --headless\n", argv[0]);
+        fprintf(stderr,"    %s /tmp/fib.bin --headless --steps 1000\n", argv[0]);
         return 1;
     }
     const char *bin = argv[1];
-    bool headless = (argc>2 && strcmp(argv[2],"--headless")==0);
+    bool headless = false;
+    long max_steps = -1; // -1 = until halt
+    for(int i=2;i<argc;i++){
+        if(strcmp(argv[i],"--headless")==0) headless = true;
+        else if(strcmp(argv[i],"--steps")==0 && i+1<argc) max_steps = atol(argv[++i]);
+    }
 
     CPU cpu;
     srand((unsigned)time(nullptr));
@@ -24,10 +30,13 @@ int main(int argc, char **argv){
     }
 
     if(headless){
-        // headless mode - like easy6502 Run
-        while(!cpu.halted){
+        // headless mode - like easy6502 Run (supports --steps for infinite loops like Snake)
+        long steps = 0;
+        while(!cpu.halted && (max_steps < 0 || steps < max_steps)){
             if(!cpu_step(&cpu)) break;
+            steps++;
         }
+        if(max_steps >= 0 && steps >= max_steps) printf("\n[steps limit %ld reached]\n", max_steps);
         printf("\n[halt] pc=0x%04x a0=%u (0x%x) t0=%u t1=%u t2=%u\n",
             cpu.pc, cpu.regs[10], cpu.regs[10], cpu.regs[5], cpu.regs[6], cpu.regs[7]);
         // dump RAM (0x40 and 0x300 for labs)
