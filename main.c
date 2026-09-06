@@ -58,7 +58,7 @@ int main(int argc, char **argv){
         }
         int cmd = ui_handle_input();
         if(cmd==3) break;
-        if(cmd==2){ cpu_reset(&cpu); cpu_load_bin(&cpu,bin); continue; }
+        if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
         if(cmd==1){ // run até halt
             nodelay(stdscr, TRUE);
             while(!cpu.halted){
@@ -68,7 +68,7 @@ int main(int argc, char **argv){
                     ui_draw(&ui,&cpu);
                     int ch=getch();
                     if(ch=='q' || ch==' ') break;
-                    if(ch=='R'){ cpu_reset(&cpu); cpu_load_bin(&cpu,bin); break; }
+                    if(ch=='R'){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); break; }
                     usleep(10000);
                 }
             }
@@ -78,7 +78,7 @@ int main(int argc, char **argv){
         if(cmd==4){ // run slow (spin)
             nodelay(stdscr, TRUE);
             for(int i=0;i<200 && !cpu.halted;i++){
-                cpu_step(&cpu);
+                (void)cpu_step(&cpu);
                 ui_draw(&ui,&cpu);
                 usleep(30000);
                 int ch=getch();
@@ -88,7 +88,7 @@ int main(int argc, char **argv){
             continue;
         }
         // step
-        if(!cpu.halted) cpu_step(&cpu);
+        if(!cpu.halted) (void)cpu_step(&cpu);
     }
     ui_destroy(&ui);
     printf("final a0=%u t0=%u t1=%u mem[0x40]=%u\n", cpu.regs[10], cpu.regs[5], cpu.regs[6],
