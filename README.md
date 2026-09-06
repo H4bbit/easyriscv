@@ -17,8 +17,22 @@ just clean             # remove artifacts
 
 ## Labs
 
-- `01-pixel` - first framebuffer draw
-- `02-fib` - Fibonacci N=7
-- `03-fib-ram` - Fibonacci with RAM vector at 0x300
+- `01-pixel` - first framebuffer draw (sb to 0x200, 1 byte/pixel)
+- `02-fib` - Fibonacci N=7 (branching)
+- `03-fib-ram` - Fibonacci vector in RAM 0x300
+- `04-branching` - countdown with bne
+- `05-memory` - lw/sw/sb/lbu
+- `06-stack` - manual sp push/pop
+- `07-jumping` - jal/jalr nested calls
+
+## Book
+
+- `book/00-intro.md` - intro
+- `book/02-first-pixel.md` - first program
+- `book/03-registers.md` - register file
+- `book/04-branching.md` - branching
+- `book/05-memory.md` - memory
+- `book/06-stack.md` - stack
+- `book/07-jumping.md` - jumping
 
 Requires: `clang`, `llvm`, `ncursesw`, `just`.

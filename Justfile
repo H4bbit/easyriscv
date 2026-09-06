@@ -38,9 +38,13 @@ debug lab="01-pixel": (assemble lab)
 
 # Run all labs headless
 all:
-    just assemble 01-pixel && just run 01-pixel
-    just assemble 02-fib && just run 02-fib
-    just assemble 03-fib-ram && just run 03-fib-ram
+    just run 01-pixel
+    just run 02-fib
+    just run 03-fib-ram
+    just run 04-branching
+    just run 05-memory
+    just run 06-stack
+    just run 07-jumping
 
 # Inspection (like linux_user_mode)
 disasm lab="01-pixel":
