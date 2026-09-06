@@ -2,6 +2,8 @@
 #include "ui.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 int main(int argc, char **argv){
@@ -15,6 +17,7 @@ int main(int argc, char **argv){
     bool headless = (argc>2 && strcmp(argv[2],"--headless")==0);
 
     CPU cpu;
+    srand((unsigned)time(nullptr));
     if(!cpu_load_bin(&cpu, bin)){
         perror("load bin");
         return 1;
@@ -54,6 +57,8 @@ int main(int argc, char **argv){
             refresh();
         }
         int cmd = ui_handle_input();
+        // feed last key to $FF like easy6502 (for Snake labs)
+        if(cmd >= 32 && cmd < 127) cpu.mem[0xFF] = (uint8_t)cmd;
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
         if(cmd==1){ // run até halt
@@ -84,7 +89,7 @@ int main(int argc, char **argv){
             nodelay(stdscr,FALSE);
             continue;
         }
-        // step
+        // step (store any pending key)
         if(!cpu.halted) (void)cpu_step(&cpu);
     }
     ui_destroy(&ui);

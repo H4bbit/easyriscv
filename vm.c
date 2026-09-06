@@ -163,6 +163,8 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
 bool cpu_step(CPU *cpu) {
     if (cpu->halted) return false;
     cpu->regs[0] = 0;
+    // easy6502 compat: $FE random each cycle, $FF last key (set by UI)
+    cpu->mem[0xFE] = (uint8_t)(rand() & 0xFF);
     if (cpu->pc + 3 >= MEM_SIZE) { cpu->halted = true; return false; }
     uint32_t instr = cpu_fetch(cpu);
     uint32_t cur_pc = cpu->pc;
