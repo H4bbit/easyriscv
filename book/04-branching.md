@@ -1,6 +1,6 @@
 # Branching
 
-So far we've run straight-line code. Now let's loop and branch — the RISC-V way vs 6502's flag-based branches.
+So far we've run straight-line code. Now let's make it loop.
 
 Run the lab:
 
@@ -20,31 +20,20 @@ loop:
     bne  t0, t2, loop   // branch if t0 != t2
 ```
 
-This mirrors easy6502:
+## How Branches Work
 
-```asm
-  LDX #$08
-decrement:
-  DEX
-  STX $0200
-  CPX #$03
-  BNE decrement
-```
+`bne t0, t2, loop` means `if (t0 != t2) pc = loop`. No separate compare instruction is needed — the branch does the compare itself. Other forms: `beq` (equal), `blt` (signed less), `bge`, `bltu` (unsigned), `bgeu`. Pseudo `beqz rs, label` is `beq rs, zero, label`.
 
-## Flags vs Explicit Compare
-
-6502's `CPX` sets the `Z` flag, then `BNE` tests `Z==0`. RISC-V has no flags. `bne t0, t2, loop` directly compares two registers — `if (t0 != t2) pc = loop`. Other branches: `beq` (equal), `blt` (signed less), `bge`, `bltu` (unsigned), `bgeu`. And pseudo `beqz rs, label` is `beq rs, zero, label`.
-
-The immediate is a 13-bit PC-relative offset (like 6502's 8-bit relative, but larger). Labels become offsets at assemble time.
+The branch offset is a 13-bit PC-relative immediate assembled from the label.
 
 ## Try It
 
-Step through `04-branching`. `t0` goes `8→7→6→5→4→3` then falls through. `FB 0x200` shows `3` (low 4 bits of last store).
+Step through `04-branching`. `t0` goes `8→7→6→5→4→3` then falls through. The framebuffer at `0x200` shows `3` (low 4 bits of the last store).
 
 ## Exercises
 
-1. Replace `bne` with `beq`. What happens? (Hint: loops only if equal on first iteration — it doesn't.)
-2. Use `blt t0, t2, loop` vs `bne`. How does signed compare differ?
-3. Write a `beqz` loop that counts up from `0` to `5` using `addi` and `beqz`? Actually you need `bne` — try both.
+1. Replace `bne` with `beq`. What happens?
+2. Use `blt t0, t2, loop` — how does signed less-than differ?
+3. Write a loop that counts up from `0` to `5` using `addi` and `bne`.
 
-Next: [05-memory.md](05-memory.md) — `lw/sw` vs 6502 addressing modes.
+Next: [05-memory.md](05-memory.md)

@@ -1,6 +1,6 @@
 # Jumping
 
-6502 has `JMP` (unconditional) and `JSR/RTS` (call/return via stack). RISC-V uses `jal`/`jalr`.
+RISC-V has two jump forms: `jal` and `jalr`.
 
 Run:
 
@@ -11,16 +11,16 @@ just debug 07-jumping
 Source (`labs/07-jumping/prog.s`):
 
 ```asm
-    jal ra, inc_one   // JSR
-    j after           // JMP (jal x0)
+    jal ra, inc_one   // call
+    j after           // unconditional jump (jal x0)
 after:
-    jalr zero, 0(ra)  // RTS (ret pseudo)
+    jalr zero, 0(ra)  // return
 ```
 
-* `jal rd, label` — `rd = pc+4; pc = label`. `jal ra, func` is `JSR`, `jal x0, label` is `JMP`, `jal ra, 0` is `j .` infinite loop halt.
-* `jalr rd, offset(rs1)` — `rd = pc+4; pc = rs1+offset & ~1`. `jalr zero, 0(ra)` is `ret`.
+* `jal rd, label` — `rd = pc+4; pc = label`. `jal ra, func` calls a function, `jal x0, label` is an unconditional jump (`j`), `jal x0, 0` is an infinite loop halt.
+* `jalr rd, offset(rs1)` — `rd = pc+4; pc = rs1+offset & ~1`. `jalr zero, 0(ra)` returns (`ret` pseudo).
 
-For nested calls, save `ra` on stack (see `outer`):
+For nested calls, save `ra` on the stack:
 
 ```asm
 outer:
@@ -32,16 +32,16 @@ outer:
     ret
 ```
 
-Without saving, `inner` would overwrite `ra` — same bug as 6502's `JSR` nesting without stack discipline.
+Without saving, `inner` would overwrite `ra` and `outer` could never return.
 
 ## Try It
 
-`07-jumping` goes `0→1→5→15` with nested `outer/inner`. Watch `ra` and `sp` in `w_regs` as you step into `jal`. `FB 0x200` shows `1 5 15`.
+`07-jumping` goes `0→1→5→15` with nested `outer/inner`. Watch `ra` and `sp` in `w_regs` as you step into `jal`. The framebuffer at `0x200` shows `1 5 15`.
 
 ## Exercises
 
-1. Remove the `sw ra`/`lw ra` in `outer`. What does `FB[2]` become?
+1. Remove the `sw ra`/`lw ra` in `outer`. What does the last framebuffer word become?
 2. Replace `j after` with `beq zero, zero, after` — does it still jump?
 3. Write a leaf function that doesn't save `ra` and a non-leaf that must.
 
-This completes the bare-metal arc. Next capstone will be Snake at `0x200` (like easy6502) using `0xFE/0xFF` input.
+This completes the bare-metal arc. The next capstone will be a Snake game at `0x200` using the framebuffer.
