@@ -9,9 +9,10 @@ Bare-metal RISC-V terminal playground inspired by [easy6502](https://github.com/
 ## Quick start
 
 ```bash
-make
+just build             # build VM
 just run 01-pixel      # headless
 just debug 01-pixel    # ncurses: SPACE step, r run, g slow, R reset, q quit
+just clean             # remove artifacts
 ```
 
 ## Labs
