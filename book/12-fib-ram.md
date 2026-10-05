@@ -66,3 +66,5 @@ the value is identical, the storage is new.
 1. Change `N` to `10`: what are `a0` and the last vector word? ([solution](../solutions/12-fib-ram/ex01-n10.s))
 2. Store bytes instead: `sb` the low byte of each term — what does the vector look like? ([solution](../solutions/12-fib-ram/ex02-bytes.s))
 3. Sum the vector back: loop `i=0..7`, `lw` each word, accumulate in `a1`. ([solution](../solutions/12-fib-ram/ex03-sum.s))
+
+Next: the Snake capstone (`labs/09-snake`, WIP) will reuse every pattern in this book: game loop, `0xFF` input, `0xFE` dice, framebuffer drawing.

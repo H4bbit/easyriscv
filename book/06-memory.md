@@ -39,10 +39,7 @@ Step and watch `w_mem` hexdump at `0x300`: `42 99 77 171`. The framebuffer at `0
 ## Exercises
 
 1. Replace `lw t4, 0(t0)` with `lb` vs `lbu`: load the byte `0xAB` at `0x30C` with each. How does sign-extend (`lb`) differ from zero-extend (`lbu`)? ([solution](../solutions/06-memory/ex01-lb-lbu.s))
-2. Use `slli t4, t2, 2` to scale an index by 4 (as `03-fib-ram` does with `slli t4, t2, 2`) then `add` + `sw` for word-indexed access. ([solution](../solutions/05-memory/ex02-scaled-index.s) — see note below)
+2. Use `slli t4, t2, 2` to scale an index by 4 (preview: shifting is covered in [11-alu](11-alu.md); `03-fib-ram` uses `slli t4, t2, 2`) then `add` + `sw` for word-indexed access. ([solution](../solutions/06-memory/ex02-scaled-index.s))
 3. Write a loop that copies 4 words from `0x300` to `0x200`. ([solution](../solutions/06-memory/ex03-copy-loop.s))
-
-> Note: `solutions/05-memory/ex02-scaled-index.s` keeps its historic path
-> (mirroring the original layout); newer solutions use the chapter number.
 
 Next: [07-stack.md](07-stack.md)

@@ -30,7 +30,7 @@ There is no flags register. Branches do the compare directly (see next chapter).
 
 ```bash
 just debug 02-fib
-# step, watch t0/t1/t2/a0 and pc
+# step, watch t0/t1/t2/a0 and pc (blt is a preview: branches are covered in [05-branching](05-branching.md))
 ```
 
 `02-fib` computes Fibonacci(7) = 13 with a counted loop:
@@ -50,6 +50,6 @@ loop:
 
 1. Move `t0` to `a0` without `mv`. Hint: `addi a0, t0, 0`. ([solution](../solutions/04-registers/ex01-addi-move.s))
 2. What happens if you write to `zero`? Try `li zero, 5` then `mv a0, zero`. ([solution](../solutions/04-registers/ex02-write-zero.s))
-3. Compare `sp` after `07-stack`: run it headless and check the final `t0` (which holds `sp & 0xF`).
+3. Compare `sp` after `07-stack` (preview: the stack pointer is covered in [07-stack](07-stack.md)): run it headless and check the final `t0` (which holds `sp & 0xF`).
 
 Next: [05-branching.md](05-branching.md)

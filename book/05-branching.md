@@ -34,7 +34,7 @@ Step through `04-branching` (lab `04-branching`). `t0` goes `8→7→6→5→4�
 
 ## Exercises
 
-1. Replace `bne` with `beq`. What happens? ([solution](../solutions/04-branching/ex01-beq.s))
+1. Replace `bne` with `beq`. What happens? ([solution](../solutions/05-branching/ex01-beq.s))
 2. Use `blt t0, t2, loop` — how does signed less-than differ? ([solution](../solutions/05-branching/ex02-blt.s))
 3. Write a loop that counts up from `0` to `5` using `addi` and `bne`. ([solution](../solutions/05-branching/ex03-count-up.s))
 
