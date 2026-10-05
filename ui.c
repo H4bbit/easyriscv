@@ -10,24 +10,24 @@ void ui_init(UI *ui){
     if(has_colors()){
         start_color();
         use_default_colors();
-        // 16 pares para framebuffer (fundo colorido)
+        // 16 pairs for framebuffer (colored background)
         for(int i=0;i<16;i++){
-            // mapeia palette_256[i] para cor ncurses aproximada (0-15) + 16..
-            // simplifica: usa foreground preto/branco e background 0-7 repetido
+            // map palette_256[i] to approximate ncurses color (0-15) + 16..
+            // simplify: black foreground, repeated 0-7 background
             init_pair(i+1, COLOR_BLACK, i%8);
         }
-        // pares p/ highlight
+        // pairs for highlight
         init_pair(20, COLOR_YELLOW, -1);
         init_pair(21, COLOR_CYAN, -1);
         init_pair(22, COLOR_GREEN, -1);
     }
     int h,w; getmaxyx(stdscr,h,w);
-    // Layout: topo ajuda (1), esquerda disasm (40), direita regs+mem+fb
+    // Layout: top help (1), left disasm (40), right regs+mem+fb
     ui->w_help   = newwin(1,w,0,0);
     ui->w_disasm = newwin(h-1, 42, 1, 0);
     ui->w_regs   = newwin(10, w-42, 1, 42);
     ui->w_mem    = newwin(8, w-42, 11, 42);
-    // fb 32x32 ocupa 16 linhas se duplicado? cabe embaixo
+    // fb 32x32 takes 16 rows when doubled, fits below
     ui->w_fb     = newwin(16, w-42, 19, 42);
 }
 
@@ -39,7 +39,7 @@ void ui_destroy(UI *ui){
 static void draw_help(UI *ui){
     werase(ui->w_help);
     wbkgd(ui->w_help, A_REVERSE);
-    mvwprintw(ui->w_help,0,1,"EasyRISC-V Terminal | [SPACE]/n:step  r:run  g:run-slow  R:reset  q:quit  | PC em amarelo | a0 resultado");
+    mvwprintw(ui->w_help,0,1,"EasyRISC-V Terminal | [SPACE]/n:step  r:run  g:run-slow  R:reset  q:quit  | PC in yellow | a0 result");
     wrefresh(ui->w_help);
 }
 
@@ -48,7 +48,7 @@ static void draw_disasm(UI *ui, CPU *cpu){
     box(ui->w_disasm,0,0);
     mvwprintw(ui->w_disasm,0,2," Disassembly ");
     int max_lines = getmaxy(ui->w_disasm)-2;
-    // centraliza PC
+    // center on PC
     int pc_idx = cpu->pc/4;
     int start = pc_idx - max_lines/2;
     if(start<0) start=0;
@@ -74,15 +74,15 @@ static void draw_regs(UI *ui, CPU *cpu){
     werase(ui->w_regs);
     box(ui->w_regs,0,0);
     mvwprintw(ui->w_regs,0,2," Registers (a0=t1 final) ");
-    // mostra t0,t1,t2,a0,t3,s0,s1 etc - igual easy6502 A/X/Y
+    // show t0,t1,t2,a0,t3,s0,s1 etc - like easy6502 A/X/Y
     int row=1;
-    // linha 1: zero ra sp gp
+    // row 1: zero ra sp gp
     mvwprintw(ui->w_regs,row++,1,"zero:%08x ra:%08x sp:%08x gp:%08x", cpu->regs[0],cpu->regs[1],cpu->regs[2],cpu->regs[3]);
     mvwprintw(ui->w_regs,row++,1," t0:%08x  t1:%08x  t2:%08x  t3:%08x", cpu->regs[5],cpu->regs[6],cpu->regs[7],cpu->regs[28]);
     mvwprintw(ui->w_regs,row++,1," s0:%08x  s1:%08x  a0:%08x  a1:%08x", cpu->regs[8],cpu->regs[9],cpu->regs[10],cpu->regs[11]);
     mvwprintw(ui->w_regs,row++,1," a2:%08x  a3:%08x  a4:%08x  a5:%08x", cpu->regs[12],cpu->regs[13],cpu->regs[14],cpu->regs[15]);
     mvwprintw(ui->w_regs,row++,1," a6:%08x  a7:%08x  pc:%08x  %s", cpu->regs[16],cpu->regs[17],cpu->pc, cpu->halted?"HALT":"RUN");
-    // destaca a0
+    // highlight a0
     mvwchgat(ui->w_regs,4, 18, 8, A_BOLD, 22, NULL);
     wrefresh(ui->w_regs);
 }
@@ -103,7 +103,7 @@ static void draw_mem(UI *ui, CPU *cpu){
         ascii[16]=0;
         mvwprintw(ui->w_mem,1+i,1,"%04x: %s |%s|", base, hex, ascii);
     }
-    // também mostra RAM 0x40 se tiver dados (fib_ram)
+    // also show RAM 0x40 if it holds data (fib_ram)
     mvwprintw(ui->w_mem,6,1,"0x40: ");
     for(int i=0;i<8;i++){
         uint32_t v = cpu->mem[0x40+i*4] | (cpu->mem[0x40+i*4+1]<<8) | (cpu->mem[0x40+i*4+2]<<16) | (cpu->mem[0x40+i*4+3]<<24);
@@ -116,8 +116,8 @@ static void draw_fb(UI *ui, CPU *cpu){
     werase(ui->w_fb);
     box(ui->w_fb,0,0);
     mvwprintw(ui->w_fb,0,2," Framebuffer 32x32 @0x200 (easy6502 compat) ");
-    // Renderiza 32x32 -> 16 linhas x 32 cols com 2 pixels por linha usando half-block
-    // Simplificado: 16 linhas, cada linha mostra 2 linhas de pixels com caractere ' ' com bg color
+    // Render 32x32 -> 16 rows x 32 cols with 2 pixels per row using half-block
+    // Simplified: 16 rows, each row shows 2 pixel rows with ' ' char and bg color
     int start_y=1, start_x=1;
     int max_h = getmaxy(ui->w_fb)-2;
     int max_w = getmaxx(ui->w_fb)-2;
@@ -129,22 +129,22 @@ static void draw_fb(UI *ui, CPU *cpu){
             uint8_t c1 = cpu->mem[FB_BASE + (y*2)*32 + x] & 0x0F;
             uint8_t c2 = cpu->mem[FB_BASE + (y*2+1)*32 + x] & 0x0F;
             // use upper half block to show 2 pixels
-            // ncurses: não tem truecolor, usa 8 cores; mapeia 0-15 -> pairs 1-16
+            // ncurses: no truecolor, uses 8 colors; map 0-15 -> pairs 1-16
             int pair1 = (c1%8)+1;
             int pair2 = (c2%8)+1;
-            // desenha com '▀' fg=c1 bg=c2
-            // truque: escreve espaço com bg=c1, depois ajusta
-            // simples: usa ' ' com bg = c1, e se precisar mostra segundo pixel na linha seguinte
-            // aqui faz 1 linha = 2 pixels via unicode
+            // draw with '▀' fg=c1 bg=c2
+            // trick: write space with bg=c1, then adjust
+            // simple: use ' ' with bg = c1, show second pixel on next row if needed
+            // here 1 row = 2 pixels via unicode
             wattron(ui->w_fb, COLOR_PAIR(pair1));
-            // tenta usar block
+            // try block char
             waddstr(ui->w_fb, "▀");
             wattroff(ui->w_fb, COLOR_PAIR(pair1));
-            // se quiser precisão, ignora c2 nesta linha (mostra só c1)
+            // for accuracy, ignore c2 on this row (show only c1)
             (void)pair2; (void)c2;
         }
     }
-    // fallback simple: mostra info
+    // fallback: show info
     mvwprintw(ui->w_fb, getmaxy(ui->w_fb)-1, 1, " mem[0x200]=%02x ... mem[0x40]=fib vec ", cpu->mem[0x200]);
     wrefresh(ui->w_fb);
 }
@@ -155,7 +155,7 @@ void ui_draw(UI *ui, CPU *cpu){
     draw_regs(ui,cpu);
     draw_mem(ui,cpu);
     draw_fb(ui,cpu);
-    // refresh geral
+    // general refresh
     doupdate();
 }
 

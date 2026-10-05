@@ -70,7 +70,7 @@ int main(int argc, char **argv){
         if(cmd >= 32 && cmd < 127) cpu.mem[0xFF] = (uint8_t)cmd;
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
-        if(cmd==1){ // run até halt
+        if(cmd==1){ // run until halt
             nodelay(stdscr, TRUE);
             while(!cpu.halted){
                 if(!cpu_step(&cpu)) break;
