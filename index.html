@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyRISC-V Terminal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrapper">
+<header>
+<h1>EasyRISC-V Terminal</h1>
+<p>Bare-metal RV32I playground in the browser. Inspired by
+<a href="https://skilldrick.github.io/easy6502/">easy6502</a> by Nick Morgan
+(<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+No toolchain, no server: the assembler and CPU are <code>riscv.js</code>.</p>
+<nav class="toc">
+<a href="#play">Playground</a> &middot;
+<a href="#map">Memory map</a> &middot;
+<a href="#asm">Assembler notes</a>
+</nav>
+</header>
+
+<section id="play">
+<h2>Playground</h2>
+<p>Click <strong>Assemble</strong>, then <strong>Run</strong>.
+Tick <strong>Debugger</strong> for single-stepping, <strong>Monitor</strong> for a hex view.
+Keys <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> feed the <code>0xFF</code> port (Snake).</p>
+
+<div class="widget">
+  <div class="labPicker">
+    <label for="labSelect">Lab:</label>
+    <select class="labSelect" id="labSelect"></select>
+  </div>
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+
+  <textarea class="code" spellcheck="false">// First program - load immediates and store bytes to the framebuffer
+// Draws 3 pixels on the 32x32 framebuffer at 0x200 (1 byte/pixel)
+// Step 1 is canonical (addi/jal), step 2 is the shorthand (li/j).
+.section .text
+.globl _start
+_start:
+    addi t0, zero, 1      // canonical: t0 = 1 (see li below)
+    addi t1, zero, 0x200 // canonical: t1 = 0x200
+    sb t0, 0(t1)      // pixel (0,0) - 1 byte per pixel
+    li t0, 5          // shorthand for addi t0, zero, 5: green
+    sb t0, 1(t1)      // pixel (1,0)
+    li t0, 8          // shorthand for addi t0, zero, 8: orange
+    sb t0, 2(t1)      // pixel (2,0)
+    jal x0, .         // halt: jump to self (j . is shorthand)</textarea>
+
+  <canvas class="screen" width="160" height="160"></canvas>
+
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label for="debug">Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+
+  <div class="monitorControls">
+    <label for="monitoring">Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+
+    <label for="start">Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label for="length">Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+    </div>
+</div>
+</section>
+
+<section id="map">
+<h2>Memory map</h2>
+<pre>0x000-0x0FF  RAM / zero-page (variables, game state)
+0x100-0x1FF  stack (grows down from 0x1FC)
+0x200-0x5FF  framebuffer 32x32, 1 byte/pixel (low nibble = colour)
+0x600-...    code (PC starts at 0x600)
+0xFE/0xFF    MMIO random / last-key (intercepted on LOAD)
+0x1000       MMIO print-char port (intercepted on STORE)</pre>
+</section>
+
+<section id="asm">
+<h2>Assembler notes</h2>
+<ul>
+<li>Two passes, like the easy6502 assembler: <code>define</code>/<code>.equ</code>,
+labels, then code at <code>0x600</code>. Fixed 32-bit words, so every
+instruction is 4 bytes except <code>li</code> with a large immediate
+(<code>lui + addi</code>, 8 bytes).</li>
+<li>Canonical first, pseudo right after: <code>li/mv/nop/j/jal/jr/ret</code>,
+<code>not/neg/seqz/snez/sltz/sgtz</code>, <code>beqz/bnez/blez/bgez/bltz/bgtz</code>,
+<code>bgt/ble/bgtu/bleu</code> all assemble to their canonical encodings.
+Disassembly shows the same folds as <code>vm.c</code>
+(<code>li/mv/beqz/bnez</code>).</li>
+<li><code>li</code> takes a number or symbol only: a label address in
+<code>li</code> is out of scope (that is what <code>la</code> is for, and
+<code>la/call/tail</code> stay out of scope in the fixed
+<code>0x600</code> model).</li>
+<li>Comments are <code>//</code> and <code>;</code>. Numbers are decimal,
+<code>0x</code> hex, <code>$</code> hex, <code>%</code> binary.
+<code>.byte</code>/<code>.word</code> emit raw data.</li>
+</ul>
+</section>
+
+<footer>
+<p><small>Terminal VM in <code>main</code> branch &mdash; this page is the web mirror.
+Book lessons live in <code>main:book/</code>; labs in <code>main:labs/</code>.</small></p>
+</footer>
+</div>
+<script src="labs.js"></script>
+<script src="riscv.js"></script>
+</body>
+</html>

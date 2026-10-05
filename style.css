@@ -1,0 +1,159 @@
+.widget {
+  width: 600px;
+  margin: 30px auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+body {
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0 12px;
+  line-height: 1.5;
+}
+
+.wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+nav.toc {
+  margin: 8px 0 16px 0;
+}
+
+section pre {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 8px;
+  overflow: auto;
+}
+
+.labPicker {
+  margin: 8px 0;
+}
+
+.labSelect {
+  max-width: 100%;
+  font-size: 13px;
+}
+
+.buttons {
+  margin: 8px 0;
+}
+
+.start, .length {
+  width: 50px;
+}
+
+.widget pre {
+  margin: 0;
+  padding: 0;
+  background: inherit;
+  border: none;
+}
+
+.code {
+  margin: 0 0 6px 0;
+  padding: 6px;
+  border: 1px solid black;
+  width: 420px;
+  height: 290px;
+  font-family: monospace;
+  overflow: auto;
+  float: left;
+  box-sizing: border-box;
+}
+
+.screen {
+  float: right;
+  image-rendering: pixelated;
+  border: 1px solid black;
+}
+
+.debugger {
+  border: 1px black solid;
+  margin-top: 6px;
+  padding: 3px;
+  padding-top: 8px;
+  min-height: 125px;
+  width: 152px;
+  text-align: center;
+  float: right;
+  box-sizing: border-box;
+}
+
+.minidebugger {
+  margin: 0;
+  margin-top: 6px;
+  padding: 0;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.monitorControls {
+  width: 100%;
+  clear: both;
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.monitorControls input {
+  margin-right: 0.5em;
+}
+
+.monitor {
+  margin: 10px 0;
+  padding: 6px;
+  border: 1px solid #999;
+  background-color: #ddd;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 140px;
+  overflow: auto;
+  display: none;
+}
+
+.messages {
+  margin: 10px 0;
+  padding: 6px;
+  border: 1px solid #999;
+  background-color: #f7f7f7;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.messages pre, .monitor pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.monitor-invalid {
+  border: 1px inset #c00;
+}
+
+/* Stack the editor above the screen on narrow (mobile) screens */
+@media (max-width: 640px) {
+  .widget {
+    width: 100%;
+  }
+  .code {
+    width: 100%;
+    float: none;
+    height: 220px;
+  }
+  .screen {
+    float: none;
+    display: block;
+    margin: 8px auto;
+    width: 160px;
+    max-width: 60vw;
+    height: auto;
+  }
+  .debugger {
+    float: none;
+    width: 100%;
+    min-height: 0;
+  }
+}
