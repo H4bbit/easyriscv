@@ -2,7 +2,7 @@
 .section .text
 .globl _start
 _start:
-    li sp, 0x900
+    li sp, 0x1FC
     li s0, 0x2A       // s0 = 42
     addi sp, sp, -4
     sw s0, 0(sp)      // save s0
@@ -16,4 +16,4 @@ _start:
 clobber:
     li s0, 0          // clobbers s0, caller restores after return
     jalr zero, 0(ra)
-// Expected: FB[0]=10 (s0 preserved as 42), sp back at 0x900
+// Expected: FB[0]=10 (s0 preserved as 42), sp back at 0x1FC

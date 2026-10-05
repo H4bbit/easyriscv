@@ -3,7 +3,7 @@
 .section .text
 .globl _start
 _start:
-    li sp, 0x900
+    li sp, 0x1FC
     li t1, 0x200
     li t2, 0          // counter = 0
 push:
@@ -22,4 +22,4 @@ pop:
     li t3, 8
     blt t2, t3, pop
     j .
-// Expected: FB[0..7] = 7 6 5 4 3 2 1 0, sp back at 0x900
+// Expected: FB[0..7] = 7 6 5 4 3 2 1 0, sp back at 0x1FC

@@ -3,7 +3,7 @@
 .globl _start
 _start:
     li a0, 7
-    li s0, 0x300
+    li s0, 0x000
     li t0, 0
     sw t0, 0(s0)
     beq a0, zero, sum

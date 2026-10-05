@@ -3,7 +3,7 @@
 .globl _start
 _start:
     li a0, 10
-    li s0, 0x300
+    li s0, 0x000
     li t0, 0
     sw t0, 0(s0)
     beq a0, zero, done
@@ -24,4 +24,4 @@ ready:
     mv a0, t1
 done:
     j done
-// Expected: a0=55, RAM 0x300 = 0 1 1 2 3 5 8 13 (first 8 words)
+// Expected: a0=55, RAM 0x000 = 0 1 1 2 3 5 8 13 (first 8 words)

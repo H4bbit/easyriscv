@@ -13,7 +13,7 @@ _start:
 after:
     addi t0, t0, 4    // t0 = 5
     sb t0, 1(t1)      // FB[1] = 5
-    li sp, 0x900
+    li sp, 0x1FC
     jal ra, outer
     sb t0, 2(t1)      // never reached correctly: ra was clobbered
     j .

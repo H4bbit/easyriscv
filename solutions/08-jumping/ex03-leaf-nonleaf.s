@@ -2,7 +2,7 @@
 .section .text
 .globl _start
 _start:
-    li sp, 0x900
+    li sp, 0x1FC
     li t1, 0x200
     li t0, 10
     jal ra, double_add  // non-leaf: calls add_one twice
@@ -21,4 +21,4 @@ double_add:             // non-leaf: must save ra before jal
     lw ra, 0(sp)
     addi sp, sp, 4
     jalr zero, 0(ra)
-// Expected: FB[0]=12 (10+1+1), sp back at 0x900
+// Expected: FB[0]=12 (10+1+1), sp back at 0x1FC
