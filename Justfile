@@ -36,7 +36,7 @@ run lab="01-pixel": (assemble lab)
 debug lab="01-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin
 
-# Run all labs headless (09-snake is infinite loop, use: just debug 09-snake or just run-steps 09-snake 1000)
+# Run all labs headless (09-snake is an endless game loop, 08-alu/10-io use random: use just debug 09-snake or just run-steps 09-snake 1000)
 all:
     just run 01-pixel
     just run 02-fib
@@ -45,7 +45,7 @@ all:
     just run 05-memory
     just run 06-stack
     just run 07-jumping
-    just run 08-alu
+    just run 10-io
 
 # Run with step limit (for infinite loops like Snake)
 run-steps lab="09-snake" steps="1000":

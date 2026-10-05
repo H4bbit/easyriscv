@@ -44,4 +44,4 @@ Without saving, `inner` would overwrite `ra` and `outer` could never return.
 2. Replace `j after` with `beq zero, zero, after` — does it still jump? ([solution](../solutions/08-jumping/ex02-beq-jump.s))
 3. Write a leaf function that doesn't save `ra` and a non-leaf that must. ([solution](../solutions/08-jumping/ex03-leaf-nonleaf.s))
 
-This completes the bare-metal arc. The next capstone will be a Snake game at `0x200` using the framebuffer.
+Next: [10-io.md](10-io.md) — or [09-snake](../labs/09-snake/prog.s) when the capstone lands.

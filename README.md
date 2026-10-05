@@ -38,10 +38,13 @@ just clean             # remove artifacts
 - `book/06-memory.md` - memory
 - `book/07-stack.md` - stack
 - `book/08-jumping.md` - jumping
+- `book/10-io.md` - MMIO and ecall
+- `book/11-alu.md` - ALU (needs `10-io`)
+- `book/12-fib-ram.md` - Fibonacci vector in RAM
 
 ## Solutions
 
-- `solutions/` - exercise solutions per lab (01-pixel, 04-registers, 04-branching, 05-branching, 06-memory, 07-stack, 08-jumping),
+- `solutions/` - exercise solutions per lab,
   layout adapted from [cpantel/Easy6502](https://github.com/cpantel/Easy6502)
   (community solutions for the easy6502 ebook).
 

@@ -11,7 +11,7 @@ a 32x32 framebuffer, and self-contained lessons.
 * `ui.c` — ncurses debugger: disassembly (PC in yellow), registers,
   memory hexdump, framebuffer pixels
 * `labs/` — one `prog.s` per lesson, assembled bare-metal at `0x0`
-* `book/` — self-contained lessons, `00` to `08`, no prerequisites
+* `book/` — self-contained lessons, `00` to `12`, no prerequisites
 * `solutions/` — exercise answers per lab
 
 ## Quick start
@@ -35,12 +35,14 @@ just clean             # remove artifacts
 | `05-memory` | `06-memory` | `lw`/`sw`/`sb`/`lbu`, base+offset |
 | `06-stack` | `07-stack` | manual `sp` push/pop |
 | `07-jumping` | `08-jumping` | `jal`/`jalr` nested calls |
+| `10-io` | `10-io` | MMIO ports (`0xFE`/`0xFF`/`0x1000`) and `ecall` print |
+| `08-alu` | `11-alu` | `and`/`or`/`xor`, shifts, `sub`/`slt` (needs `10-io` for `0xFE`) |
+| `03-fib-ram` | `12-fib-ram` | vector in RAM `0x300` (`slli` index×4) |
 
-Extra labs (covered by later chapters): `03-fib-ram` (vector in RAM `0x300`),
-`08-alu` (`and`/`or`/`xor` masking, random at `0xFE`), `09-snake` (capstone, WIP).
+Capstone (WIP): `09-snake` (game loop, `WASD` at `0xFF`, apple at random).
 
 ## Solutions
 
-* `solutions/` — exercise solutions per lab (`01-pixel`, `04-branching`, `05-memory`)
+* `solutions/` — exercise solutions per lab
 
 Requires: `clang`, `llvm`, `ncursesw`, `just`.
