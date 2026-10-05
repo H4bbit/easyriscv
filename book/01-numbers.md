@@ -39,4 +39,4 @@ just debug 01-pixel   # watch t0 = 0x1, 0x5, 0x8
 2. Try `li t0, 0x1234` and `just disasm` it — how many instructions?
 3. Change `sw t0, 0(t1)` to `sw t0, 1(t1)` — what happens to alignment? (Hint: `lw` requires aligned)
 
-Next: [02-first-pixel.md](02-first-pixel.md)
+Next: [02-toolchain.md](02-toolchain.md)

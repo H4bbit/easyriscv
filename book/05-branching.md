@@ -16,8 +16,10 @@ Source (`labs/04-branching/prog.s`):
     li t2, 3
 loop:
     addi t0, t0, -1
-    sw   t0, 0(t1)
+    sb   t0, 0(t1)       // 1 byte/pixel at 0x200
     bne  t0, t2, loop   // branch if t0 != t2
+    sb   t0, 1(t1)       // final value at next pixel
+    j    .               // halt
 ```
 
 ## How Branches Work
@@ -28,7 +30,7 @@ The branch offset is a 13-bit PC-relative immediate assembled from the label.
 
 ## Try It
 
-Step through `04-branching`. `t0` goes `8→7→6→5→4→3` then falls through. The framebuffer at `0x200` shows `3` (low 4 bits of the last store).
+Step through `04-branching` (lab `04-branching`). `t0` goes `8→7→6→5→4→3` then falls through. The first two framebuffer bytes at `0x200` show `3 3` (headless prints `Framebuffer 0x200: 3 3 ...`), the low 4 bits of the last stores.
 
 ## Exercises
 
@@ -36,4 +38,4 @@ Step through `04-branching`. `t0` goes `8→7→6→5→4→3` then falls throug
 2. Use `blt t0, t2, loop` — how does signed less-than differ?
 3. Write a loop that counts up from `0` to `5` using `addi` and `bne`.
 
-Next: [05-memory.md](05-memory.md)
+Next: [06-memory.md](06-memory.md)

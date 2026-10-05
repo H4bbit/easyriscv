@@ -30,7 +30,7 @@ int main(int argc, char **argv){
     }
 
     if(headless){
-        // headless mode - like easy6502 Run (supports --steps for infinite loops like Snake)
+        // headless mode: run to halt (supports --steps for looping programs like Snake)
         long steps = 0;
         while(!cpu.halted && (max_steps < 0 || steps < max_steps)){
             if(!cpu_step(&cpu)) break;
@@ -66,7 +66,7 @@ int main(int argc, char **argv){
             refresh();
         }
         int cmd = ui_handle_input();
-        // feed last key to $FF like easy6502 (for Snake labs)
+        // feed last key to $FF (polled by interactive programs like Snake)
         if(cmd >= 32 && cmd < 127) cpu.mem[0xFF] = (uint8_t)cmd;
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }

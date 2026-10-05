@@ -28,8 +28,8 @@ Step and watch `sp` in `w_regs` decrement then restore. Forget `addi sp, 4` afte
 
 ## Exercises
 
-1. Push 8 colors and pop to draw a mirrored pattern.
-2. What if you `sw` to `0x1000`? That's out of bounds — the VM treats it as MMIO in `kernel.s` style.
+1. Push 8 colors and pop to draw a mirrored pattern (first loop pushes, second loop pops and draws).
+2. What if you `sw` to `0x1000`? That address is outside the 4KB memory (`0x000-0xFFF`) — the VM intercepts it as a print-char MMIO port instead of RAM.
 3. Save/restore `s0` on the stack before a function call (preview of next chapter).
 
-Next: [07-jumping.md](07-jumping.md)
+Next: [08-jumping.md](08-jumping.md)

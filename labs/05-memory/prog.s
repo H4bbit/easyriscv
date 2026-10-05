@@ -1,6 +1,6 @@
-// Memory - RISC-V load/store vs 6502 addressing modes
+// Memory - RISC-V load/store with base+offset addressing
 // Demonstrates lw/sw, offsets, and base+offset (only modes in RISC-V)
-// Framebuffer at 0x200 is just memory - same as easy6502 $0200-$05FF
+// Framebuffer at 0x200 is just memory-mapped I/O in the 4KB address space
 
 .section .text
 .globl _start

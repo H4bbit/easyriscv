@@ -33,7 +33,18 @@ just debug 02-fib
 # step, watch t0/t1/t2/a0 and pc
 ```
 
-In `02-fib`, `li t0, 0` sets `t0=0`, `add t3, t0, t1` reads two registers and writes a third — RISC-V is 3-operand.
+`02-fib` computes Fibonacci(7) = 13 with a counted loop:
+
+```asm
+    li a0, 7          // N = 7
+    li t0, 0          // F(0)
+    li t1, 1          // F(1)
+loop:
+    add t3, t0, t1    // 3-operand: t3 = t0 + t1
+    mv  t0, t1
+    mv  t1, t3
+    blt t2, a0, loop
+```
 
 ## Exercises
 
@@ -41,4 +52,4 @@ In `02-fib`, `li t0, 0` sets `t0=0`, `add t3, t0, t1` reads two registers and wr
 2. What happens if you write to `zero`? Try `li zero, 5` then `mv a0, zero`.
 3. Compare `sp` after `06-stack`: run it headless and check the final `t0` (which holds `sp & 0xF`).
 
-Next: [04-branching.md](04-branching.md)
+Next: [05-branching.md](05-branching.md)

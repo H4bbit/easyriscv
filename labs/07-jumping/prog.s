@@ -1,5 +1,5 @@
-// Jumping - RISC-V jal/jalr vs 6502 JMP/JSR/RTS
-// Demonstrates jal (JMP/JSR) and jalr/ret (RTS)
+// Jumping - jal/jalr subroutine calls and unconditional jumps
+// Demonstrates jal (call/jump) and jalr/ret (return)
 
 .section .text
 .globl _start

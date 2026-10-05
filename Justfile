@@ -52,7 +52,7 @@ run-steps lab="09-snake" steps="1000":
     just assemble {{lab}}
     ./vm {{bindir}}/{{lab}}.bin --headless --steps {{steps}}
 
-# Inspection (like linux_user_mode)
+# Inspection
 disasm lab="01-pixel":
     llvm-objdump -d {{bindir}}/{{lab}}.elf
 

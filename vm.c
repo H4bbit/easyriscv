@@ -163,7 +163,7 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
 bool cpu_step(CPU *cpu) {
     if (cpu->halted) return false;
     cpu->regs[0] = 0;
-    // easy6502 compat: $FE random each cycle, $FF last key (set by UI)
+    // $FE random each cycle, $FF last key (set by UI)
     cpu->mem[0xFE] = (uint8_t)(rand() & 0xFF);
     if (cpu->pc + 3 >= MEM_SIZE) { cpu->halted = true; return false; }
     uint32_t instr = cpu_fetch(cpu);
@@ -239,7 +239,7 @@ bool cpu_step(CPU *cpu) {
             int32_t imm = (int32_t)(((instr >> 25) << 5) | ((instr >> 7) & 0x1F));
             imm = sign_extend((uint32_t)imm, 12);
             uint32_t addr = cpu->regs[rs1] + (uint32_t)imm;
-            // MMIO 0x1000: print char (kernel.s)
+            // MMIO 0x1000: print char to stdout
             if (addr == 0x1000) {
                 fputc((int)(cpu->regs[rs2] & 0xFF), stdout); fflush(stdout);
                 break;

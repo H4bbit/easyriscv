@@ -1,5 +1,5 @@
-// ALU - AND/OR/XOR vs classic masking
-// Demonstrates andi/ori/xori and bit masking (easy6502 AND #$03 style)
+// ALU - AND/OR/XOR bitwise ops and immediate masking
+// Demonstrates andi/ori/xori and bit masking (e.g. AND #0x03 style masks)
 
 .section .text
 .globl _start

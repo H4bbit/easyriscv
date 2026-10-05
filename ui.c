@@ -74,7 +74,7 @@ static void draw_regs(UI *ui, CPU *cpu){
     werase(ui->w_regs);
     box(ui->w_regs,0,0);
     mvwprintw(ui->w_regs,0,2," Registers (a0=t1 final) ");
-    // show t0,t1,t2,a0,t3,s0,s1 etc - like easy6502 A/X/Y
+    // show t0,t1,t2,a0,t3,s0,s1 etc - key result registers
     int row=1;
     // row 1: zero ra sp gp
     mvwprintw(ui->w_regs,row++,1,"zero:%08x ra:%08x sp:%08x gp:%08x", cpu->regs[0],cpu->regs[1],cpu->regs[2],cpu->regs[3]);
@@ -115,7 +115,7 @@ static void draw_mem(UI *ui, CPU *cpu){
 static void draw_fb(UI *ui, CPU *cpu){
     werase(ui->w_fb);
     box(ui->w_fb,0,0);
-    mvwprintw(ui->w_fb,0,2," Framebuffer 32x32 @0x200 (easy6502 compat) ");
+    mvwprintw(ui->w_fb,0,2," Framebuffer 32x32 @0x200 ");
     // Render 32x32 -> 16 rows x 32 cols with 2 pixels per row using half-block
     // Simplified: 16 rows, each row shows 2 pixel rows with ' ' char and bg color
     int start_y=1, start_x=1;

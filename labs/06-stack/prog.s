@@ -1,5 +1,5 @@
-// Stack - RISC-V manual stack vs 6502 PHA/PLA
-// Demonstrates push/pop via sp, analogous to easy6502 stack at $0100
+// Stack - manual push/pop via sp
+// Demonstrates push/pop via sp (software convention, grows down)
 // Stack grows down from 0x900 (top of safe RAM, MEM_SIZE=0x1000)
 
 .section .text
@@ -43,5 +43,5 @@ _start:
 
 // Exercises:
 // 1. What happens if you forget addi sp,sp,4 after lw? (stack leak)
-// 2. Try pushing 8 values and popping - draw mirrored pattern like easy6502 PHA/PLA example
+// 2. Try pushing 8 values and popping - draw a mirrored pattern (push loop then pop loop)
 // 3. Use sp to save ra before a jal (preview of next lab)

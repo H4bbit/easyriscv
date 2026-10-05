@@ -1,6 +1,6 @@
-// Branching - RISC-V equivalent of easy6502 BNE/BEQ lesson
+// Branching - counted loop with explicit compare branches
 // Counts down from 8 to 3, writing pixel color at 0x200 each iteration
-// Demonstrates beq/bne vs 6502 BNE/BEQ (no flags, explicit compare)
+// Demonstrates beq/bne with no flags register (explicit compare)
 
 .section .text
 .globl _start

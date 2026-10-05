@@ -38,8 +38,8 @@ Step and watch `w_mem` hexdump at `0x300`: `42 99 77 171`. The framebuffer at `0
 
 ## Exercises
 
-1. Replace `lw t4, 0(t0)` with `lbu`. How does zero-extend differ from `lb` sign-extend?
-2. Use `slli t4, t2, 2` to scale `t2` by 4 (as in `03-fib-ram`) then `add` + `sw`.
+1. Replace `lw t4, 0(t0)` with `lb` vs `lbu`: load the byte `0xAB` at `0x30C` with each. How does sign-extend (`lb`) differ from zero-extend (`lbu`)?
+2. Use `slli t4, t2, 2` to scale an index by 4 (as `03-fib-ram` does with `slli t4, t2, 2`) then `add` + `sw` for word-indexed access.
 3. Write a loop that copies 4 words from `0x300` to `0x200`.
 
-Next: [06-stack.md](06-stack.md)
+Next: [07-stack.md](07-stack.md)

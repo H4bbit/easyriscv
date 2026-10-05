@@ -29,15 +29,15 @@ just clean             # remove artifacts
 
 ## Book
 
-- `book/00-intro.md` - intro
+- `book/00-intro.md` - intro and lesson map
 - `book/01-numbers.md` - hex and immediates
-- `book/01-toolchain.md` - clang/llvm flow
-- `book/02-first-pixel.md` - first program
-- `book/03-registers.md` - register file
-- `book/04-branching.md` - branching
-- `book/05-memory.md` - memory
-- `book/06-stack.md` - stack
-- `book/07-jumping.md` - jumping
+- `book/02-toolchain.md` - clang/llvm flow
+- `book/03-first-pixel.md` - first program
+- `book/04-registers.md` - register file
+- `book/05-branching.md` - branching
+- `book/06-memory.md` - memory
+- `book/07-stack.md` - stack
+- `book/08-jumping.md` - jumping
 
 ## Solutions
 

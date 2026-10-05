@@ -26,7 +26,7 @@ You should see three colored pixels at the top-left of the framebuffer panel. He
 Framebuffer 0x200 (bytes, 1 byte/pixel): 1 5 8
 ```
 
-Palette (same 16 as easy6502): `0` black, `1` white, `2` red, `3` cyan, `4` purple, `5` green, `6` blue, `7` yellow, `8` orange... `15` light grey.
+Palette (16 colors, nibble `0`-`15`): `0` black, `1` white, `2` red, `3` cyan, `4` purple, `5` green, `6` blue, `7` yellow, `8` orange... `15` light grey.
 
 If you see that, the VM is working.
 
@@ -52,4 +52,4 @@ On real hardware video is more complex, but the idea is the same: memory-mapped 
 2. Move one pixel to the bottom-right corner. Hint: 1 byte per pixel, offset `1023` is the last pixel (`31,31`). Try `sb t0, 1023(t1)` or `sb t0, 31(t1)` for row 0 end.
 3. Add more instructions to draw a diagonal: `sb` at offsets `0`, `33`, `66`... (32 bytes per row, +33 = down+right).
 
-Next: [03-registers.md](03-registers.md)
+Next: [04-registers.md](04-registers.md)
