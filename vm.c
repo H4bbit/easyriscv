@@ -22,22 +22,24 @@ bool cpu_load_bin(CPU *cpu, const char *path) {
     fseek(f, 0, SEEK_END);
     long sz = ftell(f);
     fseek(f, 0, SEEK_SET);
-    if (sz > (long)MEM_SIZE) sz = (long)MEM_SIZE;
+    if (sz > (long)(MEM_SIZE - PROG_BASE)) sz = (long)(MEM_SIZE - PROG_BASE);
     if (sz < 0) sz = 0;
-    size_t n = fread(cpu->mem, 1, (size_t)sz, f);
+    memset(cpu->mem, 0, MEM_SIZE);
+    size_t n = fread(cpu->mem + PROG_BASE, 1, (size_t)sz, f);
     fclose(f);
     cpu->prog_size = n;
-    if (n < MEM_SIZE) memset(cpu->mem + n, 0, MEM_SIZE - n);
-    cpu->pc = 0;
+    cpu->pc = PROG_BASE;
     memset(cpu->regs, 0, sizeof(cpu->regs));
     cpu->halted = false;
+    cpu->last_key = 0;
     return true;
 }
 
 void cpu_reset(CPU *cpu) {
-    cpu->pc = 0;
+    cpu->pc = PROG_BASE;
     memset(cpu->regs, 0, sizeof(cpu->regs));
     cpu->halted = false;
+    cpu->last_key = 0;
 }
 
 uint32_t cpu_fetch(const CPU *cpu) {
@@ -163,8 +165,9 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
 bool cpu_step(CPU *cpu) {
     if (cpu->halted) return false;
     cpu->regs[0] = 0;
-    // $FE random each cycle, $FF last key (set by UI)
-    cpu->mem[0xFE] = (uint8_t)(rand() & 0xFF);
+    // MMIO 0xFE/0xFF is intercepted on LOAD (see OP_LOAD below), never
+    // stored in mem[] — the old per-step mem[0xFE]=rand() stomp broke any
+    // program whose code reaches 0xFE (e.g. Snake, ~400+ bytes).
     if (cpu->pc + 3 >= MEM_SIZE) { cpu->halted = true; return false; }
     uint32_t instr = cpu_fetch(cpu);
     uint32_t cur_pc = cpu->pc;
@@ -220,6 +223,20 @@ bool cpu_step(CPU *cpu) {
         case OP_LOAD: {
             int32_t imm = sign_extend(instr >> 20, 12);
             uint32_t addr = cpu->regs[rs1] + (uint32_t)imm;
+            // MMIO reads (easy6502 compat): random byte / last key.
+            // base+offset addressing, so match (base&~0xFFF)+offset too.
+            if (addr == 0xFE || addr == 0x1FE) {
+                if (funct3 == 2) cpu->regs[rd] = (uint32_t)(rand() & 0xFF);
+                else if (funct3 == 0) { int8_t v = (int8_t)(rand() & 0xFF); cpu->regs[rd] = (uint32_t)(int32_t)v; }
+                else cpu->regs[rd] = (uint32_t)(rand() & 0xFF);
+                break;
+            }
+            if (addr == 0xFF || addr == 0x1FF) {
+                if (funct3 == 2) cpu->regs[rd] = cpu->last_key;
+                else if (funct3 == 0) { int8_t v = (int8_t)cpu->last_key; cpu->regs[rd] = (uint32_t)(int32_t)v; }
+                else cpu->regs[rd] = cpu->last_key;
+                break;
+            }
             if (addr >= MEM_SIZE) break;
             if (funct3 == 2) { // lw
                 if (addr + 3 < MEM_SIZE)

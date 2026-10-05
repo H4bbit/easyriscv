@@ -24,8 +24,8 @@ assemble lab="01-pixel":
     elf="{{bindir}}/{{lab}}.elf"
     bin="{{bindir}}/{{lab}}.bin"
     echo "==> {{lab}}: $src"
-    clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x0,--image-base=0x0 -o $elf $src
-    llvm-objcopy -O binary $elf $bin
+    clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o $elf $src
+    llvm-objcopy -O binary --only-section=.text $elf $bin
     echo "ELF:"; llvm-objdump -d $elf | head -n 40
     echo "BIN:"; xxd $bin | head -n 5
     echo "size $(wc -c < $bin) bytes"
@@ -36,7 +36,7 @@ run lab="01-pixel": (assemble lab)
 debug lab="01-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin
 
-# Run all labs headless (09-snake is an endless game loop, 08-alu/10-io use random: use just debug 09-snake or just run-steps 09-snake 1000)
+# Run all labs headless (09-snake halts at game_over without input; steer with just debug 09-snake. 08-alu/10-io use random)
 all:
     just run 01-pixel
     just run 02-fib

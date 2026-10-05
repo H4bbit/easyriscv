@@ -39,15 +39,10 @@ int main(int argc, char **argv){
         if(max_steps >= 0 && steps >= max_steps) printf("\n[steps limit %ld reached]\n", max_steps);
         printf("\n[halt] pc=0x%04x a0=%u (0x%x) t0=%u t1=%u t2=%u\n",
             cpu.pc, cpu.regs[10], cpu.regs[10], cpu.regs[5], cpu.regs[6], cpu.regs[7]);
-        // dump RAM (0x40 and 0x300 for labs)
-        printf("RAM 0x40 :");
+        // dump zero-page RAM (0x00: fib vector / snake DIR LEN ...) for labs
+        printf("RAM 0x00 :");
         for(int i=0;i<8;i++){
-            uint32_t v = cpu.mem[0x40+i*4] | (cpu.mem[0x40+i*4+1]<<8) | (cpu.mem[0x40+i*4+2]<<16) | (cpu.mem[0x40+i*4+3]<<24);
-            printf(" %u", v);
-        }
-        printf("\nRAM 0x300:");
-        for(int i=0;i<8;i++){
-            uint32_t v = cpu.mem[0x300+i*4] | (cpu.mem[0x300+i*4+1]<<8) | (cpu.mem[0x300+i*4+2]<<16) | (cpu.mem[0x300+i*4+3]<<24);
+            uint32_t v = cpu.mem[0x00+i*4] | (cpu.mem[0x00+i*4+1]<<8) | (cpu.mem[0x00+i*4+2]<<16) | (cpu.mem[0x00+i*4+3]<<24);
             printf(" %u", v);
         }
         printf("\nFramebuffer 0x200 (bytes, 1 byte/pixel):");
@@ -67,7 +62,7 @@ int main(int argc, char **argv){
         }
         int cmd = ui_handle_input();
         // feed last key to $FF (polled by interactive programs like Snake)
-        if(cmd >= 32 && cmd < 127) cpu.mem[0xFF] = (uint8_t)cmd;
+        if(cmd >= 32 && cmd < 127) cpu.last_key = (uint8_t)cmd;
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
         if(cmd==1){ // run until halt
@@ -102,7 +97,7 @@ int main(int argc, char **argv){
         if(!cpu.halted) (void)cpu_step(&cpu);
     }
     ui_destroy(&ui);
-    printf("final a0=%u t0=%u t1=%u mem[0x40]=%u\n", cpu.regs[10], cpu.regs[5], cpu.regs[6],
-        (uint32_t)(cpu.mem[0x40]|cpu.mem[0x41]<<8|cpu.mem[0x42]<<16|cpu.mem[0x43]<<24));
+    printf("final a0=%u t0=%u t1=%u mem[0x00]=%u\n", cpu.regs[10], cpu.regs[5], cpu.regs[6],
+        (uint32_t)(cpu.mem[0x00]|cpu.mem[0x01]<<8|cpu.mem[0x02]<<16|cpu.mem[0x03]<<24));
     return 0;
 }

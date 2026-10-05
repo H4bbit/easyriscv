@@ -48,15 +48,15 @@ static void draw_disasm(UI *ui, CPU *cpu){
     box(ui->w_disasm,0,0);
     mvwprintw(ui->w_disasm,0,2," Disassembly ");
     int max_lines = getmaxy(ui->w_disasm)-2;
-    // center on PC
-    int pc_idx = cpu->pc/4;
+    // center on PC (code lives at PROG_BASE, not 0x0)
+    int pc_idx = ((int)cpu->pc - (int)PROG_BASE)/4;
     int start = pc_idx - max_lines/2;
     if(start<0) start=0;
     int prog_words = (cpu->prog_size+3)/4;
     char buf[64];
     for(int i=0;i<max_lines;i++){
         int idx = start+i;
-        int addr = idx*4;
+        int addr = idx*4 + (int)PROG_BASE;
         if(addr >= (int)MEM_SIZE) break;
         uint32_t instr=0;
         if(addr+3 < (int)MEM_SIZE) instr = cpu->mem[addr] | (cpu->mem[addr+1]<<8) | (cpu->mem[addr+2]<<16) | (cpu->mem[addr+3]<<24);
@@ -103,10 +103,10 @@ static void draw_mem(UI *ui, CPU *cpu){
         ascii[16]=0;
         mvwprintw(ui->w_mem,1+i,1,"%04x: %s |%s|", base, hex, ascii);
     }
-    // also show RAM 0x40 if it holds data (fib_ram)
-    mvwprintw(ui->w_mem,6,1,"0x40: ");
+    // also show zero-page RAM 0x00 (fib vector / snake state)
+    mvwprintw(ui->w_mem,6,1,"0x00: ");
     for(int i=0;i<8;i++){
-        uint32_t v = cpu->mem[0x40+i*4] | (cpu->mem[0x40+i*4+1]<<8) | (cpu->mem[0x40+i*4+2]<<16) | (cpu->mem[0x40+i*4+3]<<24);
+        uint32_t v = cpu->mem[0x00+i*4] | (cpu->mem[0x00+i*4+1]<<8) | (cpu->mem[0x00+i*4+2]<<16) | (cpu->mem[0x00+i*4+3]<<24);
         wprintw(ui->w_mem,"%d ", v);
     }
     wrefresh(ui->w_mem);
@@ -145,7 +145,7 @@ static void draw_fb(UI *ui, CPU *cpu){
         }
     }
     // fallback: show info
-    mvwprintw(ui->w_fb, getmaxy(ui->w_fb)-1, 1, " mem[0x200]=%02x ... mem[0x40]=fib vec ", cpu->mem[0x200]);
+    mvwprintw(ui->w_fb, getmaxy(ui->w_fb)-1, 1, " mem[0x200]=%02x ... mem[0x00]=zero-page ", cpu->mem[0x200]);
     wrefresh(ui->w_fb);
 }
 
