@@ -6,7 +6,7 @@ Bare-metal RISC-V terminal playground inspired by [easy6502](https://github.com/
 
 Prefer the browser? Read the [online book](https://h4bbit.github.io/easyriscv/) — same lessons, zero toolchain.
 
-- RV32I VM in C with ncurses debugger (no stdlib, no Linux syscalls)
+- RV32I VM in C with ncurses debugger (no stdlib, no syscalls — bare metal, MMIO only)
 - 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat
 - Own assembler in C (`asm.c`, byte-identical to the reference toolchain — `just check-asm` proves it)
 

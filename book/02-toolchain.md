@@ -64,7 +64,7 @@ just hex 01-pixel
 just elf 01-pixel
 ```
 
-These are standard LLVM binutils workflows, also used for hosted Linux binaries (`just elf`, `just disasm`).
+These are standard LLVM binutils workflows (`just elf`, `just disasm`).
 
 No hidden magic — what you assemble is what the VM fetches at `pc`.
 
