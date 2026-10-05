@@ -26,6 +26,8 @@ All registers hold 32 bits. `pc` is the program counter — the address of the c
 
 There is no flags register. Branches do the compare directly (see next chapter).
 
+A full list of the RV32I instruction set — arguments, registers, encodings — is in the [RISC-V ISA Manual, Volume I: Unprivileged](https://docs.riscv.org/reference/isa/unpriv/unpriv-index.html) (RV32I chapter), the [RISC-V Assembly Programmer's Manual](https://github.com/riscv-non-isa/riscv-asm-manual) (syntax and pseudo-ops), and the [RISC-V Green Card](https://dejazzer.com/coen2710/lectures/RISC-V-Reference-Data-Green-Card.pdf) (one-page opcode/ABI reference). Keep them open beside the debugger — they are your bible.
+
 ## Try It
 
 ```bash
