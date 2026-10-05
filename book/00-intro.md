@@ -1,7 +1,10 @@
-# easyriscv-term
+# easyriscv
 
-Bare-metal RISC-V playground: a tiny RV32I VM with a terminal debugger,
+Bare-metal RV32I playground: a tiny RV32I VM with a terminal debugger,
 a 32x32 framebuffer, and self-contained lessons.
+
+Scope: RV32I base integer instruction set only (see `README.md`) —
+no extensions, no privileged ISA.
 
 ## What this is
 

@@ -1,6 +1,12 @@
-# easyriscv-term
+# easyriscv
 
-Bare-metal RISC-V terminal playground inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
+Bare-metal RV32I playground inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
+
+Scope: RV32I base integer instruction set only — no M/A/F/D/C extensions,
+no privileged ISA, no CSRs. The VM implements the 40 unprivileged RV32I
+instructions (plus `ecall`/`ebreak` as out-of-scope stubs); the book teaches
+the subset the labs use, canonical instruction first, pseudo-instruction
+right after.
 
 - RV32I VM in C with ncurses debugger (no stdlib, no Linux syscalls)
 - 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat

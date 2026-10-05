@@ -39,7 +39,7 @@ void ui_destroy(UI *ui){
 static void draw_help(UI *ui){
     werase(ui->w_help);
     wbkgd(ui->w_help, A_REVERSE);
-    mvwprintw(ui->w_help,0,1,"EasyRISC-V Terminal | [SPACE]/n:step  r:run  g:run-slow  R:reset  q:quit  | PC in yellow | a0 result");
+    mvwprintw(ui->w_help,0,1,"EasyRISC-V (RV32I) | [SPACE]/n:step  r:run  g:run-slow  R:reset  q:quit  | PC in yellow | a0 result");
     wrefresh(ui->w_help);
 }
 
