@@ -17,7 +17,7 @@ after:
     sb t0, 1(t1)      // FB[1] = 5
 
     // nested call test: save ra on stack
-    li sp, 0x900
+    li sp, 0x1FC
     jal ra, outer
     sb t0, 2(t1)      // FB[2] should be 15
     j .

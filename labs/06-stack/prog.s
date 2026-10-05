@@ -1,11 +1,11 @@
 // Stack - manual push/pop via sp
 // Demonstrates push/pop via sp (software convention, grows down)
-// Stack grows down from 0x900 (top of safe RAM, MEM_SIZE=0x1000)
+// Stack grows down from 0x1FC (top of safe RAM, MEM_SIZE=0x1000)
 
 .section .text
 .globl _start
 _start:
-    li sp, 0x900       // init stack pointer (like SP=$FF -> $01FF)
+    li sp, 0x1FC       // init stack pointer (like SP=$FF -> $01FF)
 
     // push 3 values (PHA equivalent)
     li t0, 11
@@ -34,7 +34,7 @@ _start:
     addi sp, sp, 4
     sb t0, 2(t1)
 
-    // Stack should be back at 0x900
+    // Stack should be back at 0x1FC
     // Write sp low nibble to FB[3] for visual check
     andi t0, sp, 0xF
     sb t0, 3(t1)
