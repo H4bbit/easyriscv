@@ -4,12 +4,23 @@ vm := "vm"
 # Portable scratch dir for .elf/.bin: honors $TMPDIR (Termux, macOS,
 # Nix) with /tmp fallback. Never hardcode an OS-specific tmp path here.
 bindir := env_var_or_default("TMPDIR", "/tmp")
-# Compiler override: `cc=gcc just build` (default clang). Any C23-capable
-# compiler works; see README "Requires" for the C23/ncursesw versions.
-# (No RISCV_CC: labs assemble with our own ./asm in C; clang stays as
-# independent ground truth for inspection — just disasm/elf/hex/check-asm.)
+# Host compiler: default clang (only toolchain tested here so far).
+# Ready for future gcc testing: `CC=gcc just build` (no clang-only flags
+# in cflags on purpose; please report breakage).
 cc := env_var_or_default("CC", "clang")
-cflags := "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -fcolor-diagnostics -I."
+# Portable C23 flags, overridable as a whole: `CFLAGS="..." just build`.
+# Keep this default free of clang-only and gcc-only options.
+cflags := env_var_or_default("CFLAGS", "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -I.")
+# Reference RISC-V toolchain (ground truth for disasm/elf/check-asm):
+# default clang+llvm, swappable for future gcc testing, e.g.
+# RISCV_CC=riscv64-unknown-elf-gcc RISCV_FLAGS="-march=rv32i -mabi=ilp32 -nostdlib -Wl,-Ttext=0x600"
+#   OBJCOPY=riscv64-unknown-elf-objcopy OBJDUMP=riscv64-unknown-elf-objdump READELF=riscv64-unknown-elf-readelf
+# (untested path — clang output is the current source of truth).
+riscv_cc := env_var_or_default("RISCV_CC", "clang")
+riscv_flags := env_var_or_default("RISCV_FLAGS", "--target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600")
+objcopy := env_var_or_default("OBJCOPY", "llvm-objcopy")
+objdump := env_var_or_default("OBJDUMP", "llvm-objdump")
+readelf := env_var_or_default("READELF", "llvm-readelf")
 ldflags := "-lncursesw"
 
 # Build VM (replaces Makefile)
@@ -24,8 +35,10 @@ build:
 clean:
     rm -f vm.o ui.o main.o asm.o {{vm}} asm {{bindir}}/*.elf {{bindir}}/*.bin
 
-# Assemble lab: prog.s -> bin via our own ./asm (clang-identical, see just check-asm).
-# clang stays as independent ground truth for inspection (disasm/elf/hex).
+# Assemble lab: prog.s -> bin via our own ./asm (byte-identical to the
+# reference toolchain output — clang by default, see just check-asm).
+# The reference toolchain stays as independent ground truth for
+# inspection (disasm/elf/hex).
 assemble lab="01-pixel":
     #!/bin/bash
     set -e
@@ -59,29 +72,31 @@ run-steps lab="09-snake" steps="1000":
     just assemble {{lab}}
     ./vm {{bindir}}/{{lab}}.bin --headless --steps {{steps}}
 
-# Inspection (independent clang ground truth: needs llvm binutils)
-# Build the reference ELF via clang, proving decode_to_str against llvm-objdump.
+# Inspection (reference toolchain ground truth: clang+llvm by default,
+# swappable via RISCV_CC/RISCV_FLAGS/OBJCOPY/OBJDUMP/READELF).
+# Builds the reference ELF, proving decode_to_str against objdump.
 disasm lab="01-pixel":
-    clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
-    llvm-objdump -d {{bindir}}/{{lab}}.elf
+    {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
+    {{objdump}} -d {{bindir}}/{{lab}}.elf
 
 elf lab="01-pixel":
-    clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
-    llvm-readelf -h -S -l {{bindir}}/{{lab}}.elf
+    {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
+    {{readelf}} -h -S -l {{bindir}}/{{lab}}.elf
 
 hex lab="01-pixel":
     xxd {{bindir}}/{{lab}}.bin
 
-# Cross-check: our ./asm must be byte-identical to clang for every lab
-# and every solution. Catches drift between asm.c and the toolchain.
+# Cross-check: our ./asm must be byte-identical to the reference toolchain
+# for every lab and every solution. Catches drift between asm.c and the
+# reference assembler.
 check-asm:
     #!/bin/bash
     set -e
     [ -x ./asm ] || just build
     fail=0
     for src in labs/*/prog.s solutions/*/*.s; do \
-      clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o "{{bindir}}/ref.elf" "$src" 2>/dev/null; \
-      llvm-objcopy -O binary --only-section=.text "{{bindir}}/ref.elf" "{{bindir}}/ref.bin"; \
+      {{riscv_cc}} {{riscv_flags}} -o "{{bindir}}/ref.elf" "$src" 2>/dev/null; \
+      {{objcopy}} -O binary --only-section=.text "{{bindir}}/ref.elf" "{{bindir}}/ref.bin"; \
       ./asm "$src" "{{bindir}}/my.bin"; \
       cmp -s "{{bindir}}/ref.bin" "{{bindir}}/my.bin" || { echo "DIFF $src"; fail=1; }; \
     done

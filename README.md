@@ -8,7 +8,7 @@ Prefer the browser? Read the [online book](https://h4bbit.github.io/easyriscv/) 
 
 - RV32I VM in C with ncurses debugger (no stdlib, no Linux syscalls)
 - 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat
-- Own assembler in C (`asm.c`, clang-identical — `just check-asm` proves it)
+- Own assembler in C (`asm.c`, byte-identical to the reference toolchain — `just check-asm` proves it)
 
 ## Quick start
 
@@ -35,7 +35,7 @@ just clean             # remove artifacts
 
 - `book/00-intro.md` - intro and lesson map
 - `book/01-numbers.md` - hex and immediates
-- `book/02-toolchain.md` - assembler + clang/llvm inspection flow
+- `book/02-toolchain.md` - assembler + reference-toolchain inspection flow
 - `book/03-first-pixel.md` - first program
 - `book/04-registers.md` - register file
 - `book/05-branching.md` - branching
@@ -55,10 +55,12 @@ just clean             # remove artifacts
 ## Requires
 
 - C23 (`-std=c23`): `constexpr`, `auto`, `nullptr`, `static_assert`,
-  typed `enum`, `[[nodiscard]]` — any compiler with mature C23 support
-  (tested: Clang 21; GCC 15 expected, unverified — please report)
+  typed `enum`, `[[nodiscard]]` — tested with Clang 21 only so far;
+  `CC=`/`CFLAGS=` overrides are ready for future compiler testing
+  (please report breakage)
 - ncurses with wide-char support (`ncursesw`, ABI 6): the debugger uses
   `waddstr` with `▀` half-blocks and 16 color pairs
-- LLVM binutils for inspection/cross-check only (`clang --target=riscv32`,
-  `llvm-objcopy`, `llvm-objdump`, `llvm-readelf`: `just disasm/elf/hex/check-asm`)
-  and `just` as task runner
+- Reference RISC-V toolchain for inspection/cross-check only (clang+llvm by default:
+  `clang --target=riscv32`, `llvm-objcopy`, `llvm-objdump`, `llvm-readelf` —
+  `just disasm/elf/hex/check-asm`; `RISCV_CC`/`RISCV_FLAGS`/`OBJCOPY`/`OBJDUMP`/
+  `READELF` overrides ready for future toolchain testing) and `just` as task runner

@@ -11,8 +11,10 @@ just build          # cc -std=c23 → vm + asm
 `just build` compiles `vm.c/ui.c/main.c` (`vm`) and `asm.c` (`asm`)
 with `-std=c23` (C23: `constexpr`, `auto`, `nullptr`, `static_assert`)
 — the VM links `ncursesw` (wide-char ABI 6: `▀` half-blocks,
-16 color pairs). Set `cc=gcc` (or any C23-capable compiler) to build
-with another toolchain — the default is `clang`.
+16 color pairs). The default is clang (only toolchain tested here);
+`CC=`/`CFLAGS=` overrides exist for future compiler testing
+(e.g. `CC=gcc just build` — untested path, please report breakage).
+No clang-only flags in the default `cflags` on purpose.
 
 ## Assemble
 
@@ -22,23 +24,26 @@ just assemble 01-pixel
 
 This runs `./asm` — our own assembler in C (a port of the `riscv.js`
 Assembler on the web branch), emitting a flat `.bin` the VM loads at
-`0x600`. It is byte-identical to clang output for all labs and
-solutions (`just check-asm` proves it).
+`0x600`. It is byte-identical to the reference toolchain output for
+all labs and solutions (`just check-asm` proves it; the reference is
+clang by default, swappable via `RISCV_CC`/`RISCV_FLAGS`/
+`OBJCOPY`/`OBJDUMP`/`READELF` for future testing).
 
-clang stays as independent ground truth for inspection only:
+The reference toolchain stays as independent ground truth for
+inspection only:
 
 ```bash
-just disasm 01-pixel   # clang-built ELF via llvm-objdump (proves decode_to_str)
+just disasm 01-pixel   # reference-built ELF via objdump (proves decode_to_str)
 just hex 01-pixel      # xxd the flat binary
 just elf 01-pixel      # llvm-readelf headers and sections
-just check-asm         # byte-compare ./asm vs clang on every lab+solution
+just check-asm         # byte-compare ./asm vs reference on every lab+solution
 ```
 
 * `./asm` assembles `prog.s` to a flat binary at `0x600`
   (bare-metal, no libc, zero toolchain beyond `cc`)
-* `llvm-objdump -d` disassembles the clang-built ELF; `xxd` shows the
+* `llvm-objdump -d` disassembles the reference-built ELF (clang by default); `xxd` shows the
   flat binary (hexdump); `llvm-readelf -h -S -l` inspects ELF headers
-* `--only-section=.text` matters on the clang path: without it the ELF
+* `--only-section=.text` matters on the reference path: without it the ELF
   headers leak into the first bytes of the flat binary and the VM
   executes garbage
 
