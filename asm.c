@@ -15,10 +15,11 @@
 //   pseudo-ops: li (addi / lui / lui+addi, clang-identical split),
 //     mv, nop, not, neg, seqz/snez/sltz/sgtz,
 //     beqz/bnez/blez/bgez/bltz/bgtz, bgt/ble/bgtu/bleu,
-//     j, jal (1-arg), jr, jalr (1-arg), ret
+//     j, jal (1-arg), jr, jalr (1-arg), ret,
+//     la (auipc+addi for labels, li for numbers — clang-identical),
+//     call (jal near / j far, clang-identical), tail (j, clang-identical)
 //   directives: .section/.globl/.text/.option (ignored), .equ/.define,
-//     .byte/.word. call/tail/la are rejected (auipc sequences, out of
-//     scope for the fixed 0x600-linked 4KB model).
+//     .byte/.word/.space.
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -164,6 +165,8 @@ static bool label_find(const char *name, int32_t *val) {
 
 // Number: SYM+N / SYM-N (equ only), strict int, or bare equ symbol.
 static bool num_c(const char *s, int32_t *val) {
+    // SYM+N / SYM-N: equ only here (labels are PC-relative and resolve
+    // via pctarget_c in la/call/tail/branch/jump paths).
     if (is_name_start(s[0])) {
         size_t i = 0;
         while (is_name_char(s[i])) i++;
@@ -288,6 +291,55 @@ static void li_split(int32_t v, int *n, uint32_t *hi, int32_t *lo, bool *addi_on
     *n = (*lo == 0) ? 1 : 2;
 }
 
+// clang-identical auipc+addi split for la/call: hi20 = floor((tgt-pc+0x800)/4096),
+// lo12 = (tgt-pc) - hi20*4096 (always in [-2048,2047] by construction).
+static void pcrel_split(int32_t tgt, uint32_t pc, uint32_t *hi, int32_t *lo) {
+    int32_t d = tgt - (int32_t)pc;
+    int32_t full = floor4096(d + 0x800);
+    *hi = (uint32_t)full & 0xFFFFF;
+    *lo = d - full * 4096;
+}
+
+// Is s a bare symbol name (label or equ, no dots/offsets)?
+static bool is_bare_sym(const char *s, char *name) {
+    if (!is_name_start(s[0]) || s[0] == '.') return false;
+    size_t i = 0;
+    while (is_name_char(s[i])) i++;
+    if (s[i] != '\0' || i == 0 || i >= 128) return false;
+    memcpy(name, s, i);
+    name[i] = '\0';
+    return true;
+}
+
+// Resolve la/call/tail target: bare label > label SYM+N > target_c
+// (equ, equ-expr, number, '.'). Labels win so a label shadowing an equ
+// resolves like clang (to the label).
+static bool pctarget_c(const char *s, uint32_t addr, int32_t *val) {
+    char name[128];
+    if (is_bare_sym(s, name)) {
+        int32_t lv;
+        if (label_find(name, &lv)) {
+            *val = lv;
+            return true;
+        }
+    } else if (is_name_start(s[0])) {
+        // SYM+N / SYM-N with a label base (forward labels included:
+        // label_find fails in pass 1, succeeds in pass 1b/2).
+        size_t i = 0;
+        while (is_name_char(s[i])) i++;
+        if ((s[i] == '+' || s[i] == '-') && s[i + 1] != '\0' && i < sizeof(name)) {
+            memcpy(name, s, i);
+            name[i] = '\0';
+            int32_t base, delta;
+            if (label_find(name, &base) && parse_int_c(s + i + 1, &delta)) {
+                *val = s[i] == '+' ? base + delta : base - delta;
+                return true;
+            }
+        }
+    }
+    return target_c(s, addr, val);
+}
+
 static bool is_ignored_directive(const char *rest) {
     // .section / .globl / .text / .option (word boundary)
     if (rest[0] != '.') return false;
@@ -305,7 +357,8 @@ static bool is_ignored_directive(const char *rest) {
 }
 
 // Size of one logical line in bytes. Fails on syntax error.
-static int line_size(char *rest, int lineno) {
+// addr is the pass-1 cursor (needed for call/tail range sizing).
+static int line_size(char *rest, uint32_t addr, int lineno) {
     if (*rest == '\0') return 0;
     if (is_ignored_directive(rest)) return 0;
     if (rest[0] == '.' && (strncmp(rest, ".byte", 5) == 0 || strncmp(rest, ".word", 5) == 0) &&
@@ -317,7 +370,22 @@ static int line_size(char *rest, int lineno) {
             if (*p == ',') n++;
         return rest[1] == 'b' ? n : n * 4;
     }
-    if (rest[0] == '.') fail(lineno, "unknown directive: %s", rest);
+    if (rest[0] == '.') {
+        // .space N[,fill]: N fill bytes (default 0). GAS pads .text with
+        // zeros under alignment, but here it is an explicit directive.
+        if (strncmp(rest, ".space", 6) == 0 && (rest[6] == '\0' || isspace((unsigned char)rest[6]))) {
+            char *args = trim(rest + 6);
+            if (*args == '\0') fail(lineno, "empty .space directive");
+            char *comma = strchr(args, ',');
+            if (comma) *comma = '\0';
+            int32_t n, fill = 0;
+            if (!num_c(trim(args), &n) || n < 0) fail(lineno, "bad .space size: %s", args);
+            if (comma && !num_c(trim(comma + 1), &fill)) fail(lineno, "bad .space fill");
+            (void)fill;
+            return n;
+        }
+        fail(lineno, "unknown directive: %s (only .section/.globl/.text/.option/.equ/.byte/.word/.space supported)", rest);
+    }
     // mnemonic
     size_t i = 0;
     while (isalnum((unsigned char)rest[i]) || rest[i] == '_') i++;
@@ -332,13 +400,68 @@ static int line_size(char *rest, int lineno) {
         if (!comma || strchr(comma + 1, ',')) fail(lineno, "li needs 2 args: %s", rest);
         int32_t v;
         if (!num_c(trim(comma + 1), &v))
-            fail(lineno, "li with a label address is out of scope (use la, also out of scope here)");
+            fail(lineno, "li with a label address needs la (PC-relative), not li");
         int n;
         uint32_t hi;
         int32_t lo;
         bool addi_only;
         li_split(v, &n, &hi, &lo, &addi_only);
         return n * 4;
+    }
+    if (strcmp(op, "la") == 0) {
+        // la rd, sym: auipc+addi if label (or label-expr), li split if
+        // equ/number. Forward labels are not indexed yet in pass 1:
+        // unknown bare symbol => 8 (pass 2 errors if truly undefined).
+        char *comma = strchr(args, ',');
+        if (!comma || strchr(comma + 1, ',')) fail(lineno, "la needs 2 args: %s", rest);
+        char name[128];
+        char *targ = trim(comma + 1);
+        if (is_bare_sym(targ, name)) {
+            int32_t lv, ev;
+            if (label_find(name, &lv)) return 8; // auipc+addi
+            if (equ_find(name, &ev)) {
+                int n;
+                uint32_t hi;
+                int32_t lo;
+                bool addi_only;
+                li_split(ev, &n, &hi, &lo, &addi_only);
+                return n * 4;
+            }
+            return 8; // forward label (pass 2 resolves or errors)
+        }
+        int32_t v;
+        if (num_c(targ, &v)) {
+            int n;
+            uint32_t hi;
+            int32_t lo;
+            bool addi_only;
+            li_split(v, &n, &hi, &lo, &addi_only);
+            return n * 4;
+        }
+        return 8; // label expression (SYM+N): auipc+addi
+    }
+    if (strcmp(op, "call") == 0) {
+        // call sym: jal if in range from this addr, else auipc+jalr.
+        // Forward labels are not indexed yet in pass 1: size 8
+        // (auipc+jalr); pass 2 re-checks with final addresses and
+        // shrinks to jal when near — pass 1b below fixes the layout.
+        // Here: resolve what we can; unknown label => 8.
+        char *a = trim(args);
+        if (*a == '\0' || strchr(a, ',')) fail(lineno, "call needs 1 arg: %s", rest);
+        int32_t tgt;
+        if (!pctarget_c(a, addr, &tgt)) return 8; // forward label: worst case
+        int32_t d = tgt - (int32_t)addr;
+        if (d >= -1048576 && d <= 1048574 && (d % 2 == 0)) return 4;
+        return 8;
+    }
+    if (strcmp(op, "tail") == 0) {
+        char *a = trim(args);
+        if (*a == '\0' || strchr(a, ',')) fail(lineno, "tail needs 1 arg: %s", rest);
+        int32_t tgt;
+        if (!pctarget_c(a, addr, &tgt)) return 8; // forward label: worst case
+        int32_t d = tgt - (int32_t)addr;
+        if (d >= -1048576 && d <= 1048574 && (d % 2 == 0)) return 4;
+        return 8;
     }
     return 4;
 }
@@ -472,7 +595,19 @@ static void assemble_line(char *rest, uint32_t addr, int lineno) {
         }
         return;
     }
-    if (rest[0] == '.') fail(lineno, "unknown directive: %s", rest);
+    if (rest[0] == '.') {
+        if (strncmp(rest, ".space", 6) == 0 && (rest[6] == '\0' || isspace((unsigned char)rest[6]))) {
+            char *args = trim(rest + 6);
+            char *comma = strchr(args, ',');
+            if (comma) *comma = '\0';
+            int32_t n, fill = 0;
+            if (!num_c(trim(args), &n) || n < 0) fail(lineno, "bad .space size");
+            if (comma && !num_c(trim(comma + 1), &fill)) fail(lineno, "bad .space fill");
+            for (int32_t k = 0; k < n; k++) emit_byte((uint8_t)(fill & 0xFF));
+            return;
+        }
+        fail(lineno, "unknown directive: %s (only .section/.globl/.text/.option/.equ/.byte/.word/.space supported)", rest);
+    }
 
     size_t i = 0;
     while (isalnum((unsigned char)rest[i]) || rest[i] == '_') i++;
@@ -616,8 +751,86 @@ static void assemble_line(char *rest, uint32_t addr, int lineno) {
         emit(encI(0, 1, 0, 0, 0x67));
         return;
     }
-    if (strcmp(op, "call") == 0 || strcmp(op, "tail") == 0 || strcmp(op, "la") == 0)
-        fail(lineno, "%s is out of scope for the fixed 0x600 model (auipc sequences)", op);
+    if (strcmp(op, "la") == 0) {
+        // clang-identical: la rd, number/equ => li split;
+        // la rd, label-expr => auipc+addi (PC-relative).
+        if (argc != 2) fail(lineno, "la needs 2 args");
+        rd = reg_id(argv[0]);
+        if (rd < 0) fail(lineno, "bad la register");
+        char name[128];
+        int32_t v;
+        if (is_bare_sym(argv[1], name)) {
+            int32_t lv;
+            if (label_find(name, &lv)) {
+                uint32_t hi;
+                int32_t lo;
+                pcrel_split(lv, addr, &hi, &lo);
+                emit(encU(hi, (uint32_t)rd, 0x17));
+                emit(encI(lo, (uint32_t)rd, 0, (uint32_t)rd, 0x13));
+                return;
+            }
+            if (equ_find(name, &v)) {
+                // fall through to li split below
+            } else {
+                fail(lineno, "unknown symbol: %s", name);
+            }
+        } else if (num_c(argv[1], &v)) {
+            // pure number or equ-expr: li split below
+        } else {
+            // label expression (SYM+N): auipc+addi
+            if (!pctarget_c(argv[1], addr, &v)) fail(lineno, "bad la target: %s", argv[1]);
+            uint32_t hi;
+            int32_t lo;
+            pcrel_split(v, addr, &hi, &lo);
+            emit(encU(hi, (uint32_t)rd, 0x17));
+            emit(encI(lo, (uint32_t)rd, 0, (uint32_t)rd, 0x13));
+            return;
+        }
+        int n;
+        uint32_t hi;
+        int32_t lo;
+        bool addi_only;
+        li_split(v, &n, &hi, &lo, &addi_only);
+        if (addi_only) emit(encI(v, 0, 0, (uint32_t)rd, 0x13));
+        else if (n == 1) emit(encU(hi, (uint32_t)rd, 0x37));
+        else {
+            emit(encU(hi, (uint32_t)rd, 0x37));
+            emit(encI(lo, (uint32_t)rd, 0, (uint32_t)rd, 0x13));
+        }
+        return;
+    }
+    if (strcmp(op, "call") == 0) {
+        // clang-identical: jal if target in ±1MB from here, else auipc+jalr.
+        if (argc != 1) fail(lineno, "call needs 1 arg");
+        if (!pctarget_c(argv[0], addr, &tgt)) fail(lineno, "bad call target: %s", argv[0]);
+        int32_t d = tgt - (int32_t)addr;
+        if (d >= -1048576 && d <= 1048574 && (d % 2 == 0)) {
+            emit(encJ(d, 1));
+        } else {
+            uint32_t hi;
+            int32_t lo;
+            pcrel_split(tgt, addr, &hi, &lo);
+            emit(encU(hi, 1, 0x17)); // auipc ra, hi
+            emit(encI(lo, 1, 0, 1, 0x67)); // jalr ra, lo(ra)
+        }
+        return;
+    }
+    if (strcmp(op, "tail") == 0) {
+        // clang-identical: j if in range, else auipc+jalr with x0 (no link).
+        if (argc != 1) fail(lineno, "tail needs 1 arg");
+        if (!pctarget_c(argv[0], addr, &tgt)) fail(lineno, "bad tail target: %s", argv[0]);
+        int32_t d = tgt - (int32_t)addr;
+        if (d >= -1048576 && d <= 1048574 && (d % 2 == 0)) {
+            emit(encJ(d, 0));
+        } else {
+            uint32_t hi;
+            int32_t lo;
+            pcrel_split(tgt, addr, &hi, &lo);
+            emit(encU(hi, 6, 0x17)); // auipc t1, hi (clang scratch reg)
+            emit(encI(lo, 6, 0, 0, 0x67)); // jalr x0, lo(t1)
+        }
+        return;
+    }
     // branches: beqz/bnez/blez/bgez/bltz/bgtz, bgt/ble/bgtu/bleu, canonical
     {
         struct {
@@ -831,7 +1044,12 @@ int main(int argc, char **argv) {
         preprocess(i, lines[i]);
     }
 
-    // Pass 1: index labels, size lines.
+    // Pass 1: index labels, size lines. call/tail to a forward label
+    // sizes 8 (worst case); pass 1b shrinks near-calls to 4 once all
+    // label addresses are final, then re-flows the layout to fixpoint.
+    // labline[i] = label table index defined on line i (or -1).
+    static int labline[MAX_LINES];
+    for (int i = 0; i < nlines; i++) labline[i] = -1;
     uint32_t addr = PROG_BASE;
     static int sizes[MAX_LINES];
     for (int i = 0; i < nlines; i++) {
@@ -843,15 +1061,57 @@ int main(int argc, char **argv) {
             if (nlabels >= MAX_SYMS) fail(i, "too many labels");
             snprintf(labels[nlabels].name, sizeof(labels[nlabels].name), "%s", label);
             labels[nlabels].val = (int32_t)addr;
+            labline[i] = nlabels;
             nlabels++;
             // Compact the consumed label out of the line.
             memmove(lines[i], rest, strlen(rest) + 1);
             rest = lines[i];
         }
-        int ssz = line_size(rest, i);
+        int ssz = line_size(rest, addr, i);
         sizes[i] = ssz;
         addr += (uint32_t)ssz;
         if (addr > MEM_MAX) fail(i, "code too large for the 4KB model");
+    }
+
+    // Pass 1b: with all labels known, shrink call/tail auipc+jalr to jal/j
+    // when in range, and re-flow addresses to fixpoint. Shrinking only
+    // moves later labels down, which keeps near-calls near (monotone:
+    // terminates). la/jal/branches never change size, so only call/tail
+    // lines are re-sized here.
+    for (;;) {
+        bool changed = false;
+        addr = PROG_BASE;
+        // line addresses under current sizes
+        static uint32_t lineaddr[MAX_LINES];
+        for (int i = 0; i < nlines; i++) {
+            lineaddr[i] = addr;
+            addr += (uint32_t)sizes[i];
+        }
+        // refresh label addresses
+        for (int i = 0; i < nlines; i++)
+            if (labline[i] >= 0) labels[labline[i]].val = (int32_t)lineaddr[i];
+        // re-size call/tail lines
+        for (int i = 0; i < nlines; i++) {
+            if (sizes[i] != 8) continue;
+            char *rest = lines[i];
+            size_t k = 0;
+            while (isalnum((unsigned char)rest[k]) || rest[k] == '_') k++;
+            char op[32];
+            if (k == 0 || k >= sizeof(op)) continue;
+            memcpy(op, rest, k);
+            op[k] = '\0';
+            if (strcmp(op, "call") != 0 && strcmp(op, "tail") != 0) continue;
+            char *a = trim(rest + k);
+            if (*a == '\0' || strchr(a, ',')) fail(i, "%s needs 1 arg", op);
+            int32_t tgt;
+            if (!pctarget_c(a, lineaddr[i], &tgt)) fail(i, "bad %s target: %s", op, a);
+            int32_t d = tgt - (int32_t)lineaddr[i];
+            if (d >= -1048576 && d <= 1048574 && (d % 2 == 0)) {
+                sizes[i] = 4;
+                changed = true;
+            }
+        }
+        if (!changed) break;
     }
 
     // Pass 2: emit.
