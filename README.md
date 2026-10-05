@@ -1,57 +1,43 @@
-# easyriscv
+# easyriscv (web)
 
-Bare-metal RV32I playground inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
+Bare-metal RV32I ebook in the browser, inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
 
 Scope: RV32I base integer instruction set only — no M/A/F/D/C extensions,
-no privileged ISA, no CSRs. The VM implements the 40 unprivileged RV32I
-instructions (plus `ecall`/`ebreak` as out-of-scope stubs); the book teaches
-the subset the labs use, canonical instruction first, pseudo-instruction
-right after.
+no privileged ISA, no CSRs.
 
-- RV32I VM in C with ncurses debugger (no stdlib, no Linux syscalls)
-- 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat
-- Labs build with `clang --target=riscv32 -march=rv32i -nostdlib`
+This branch (`gh-pages`) holds the web frontend. The terminal VM lives in
+[`main`](https://github.com/H4bbit/easyriscv/tree/main): same lessons, same
+memory map, C + ncurses instead of JavaScript + canvas.
 
-## Quick start
+## Use
 
-```bash
-just build             # build VM
-just run 01-pixel      # headless
-just debug 01-pixel    # ncurses: SPACE step, r run, g slow, R reset, q quit
-just clean             # remove artifacts
-```
+Open `index.html` (or the GitHub Pages URL once deployed). No toolchain, no
+server, no build step: each chapter's widget is an RV32I assembler and CPU
+in `riscv.js`. Click **Assemble**, then **Run**.
 
-## Labs
+## Layout
 
-- `01-pixel` - first framebuffer draw (sb to 0x200, 1 byte/pixel)
-- `02-fib` - Fibonacci N=7 (branching)
-- `03-fib-ram` - Fibonacci vector in zero-page RAM 0x00
-- `04-branching` - countdown with bne
-- `05-memory` - lw/sw/sb/lbu
-- `06-stack` - manual sp push/pop
-- `07-jumping` - jal/jalr nested calls
-- `08-alu` - and/or/xor masking (random at 0xFE)
-- `09-snake` - Snake capstone (game loop, eat/grow, self/wall collision, game over)
+- `index.html` — the book: prose adapted from `main:book/` with one
+  `.widget` per chapter, each prefilled with that lab's `prog.s`
+  (byte-equal to `main:labs/*/prog.s`)
+- `riscv.js` — assembler + simulator (JS port of `main:vm.c`):
+  4KB flat mem, code at `0x600`, zero-page RAM `0x00`, stack top `0x1FC`,
+  framebuffer `0x200` (32x32, 16 colors), MMIO `0xFE` random /
+  `0xFF` last-key on load, `0x1000` print-char on store.
+  One `RiscvWidget` per `.widget` node; debugger shows the full
+  32-register file with change highlight
+- `style.css` — widget layout (600px, responsive)
+- `labs.js` — lab sources for a standalone simulator page (optional,
+  currently unreferenced from the book)
 
-## Book
+## Chapters
 
-- `book/00-intro.md` - intro and lesson map
-- `book/01-numbers.md` - hex and immediates
-- `book/02-toolchain.md` - clang/llvm flow
-- `book/03-first-pixel.md` - first program
-- `book/04-registers.md` - register file
-- `book/05-branching.md` - branching
-- `book/06-memory.md` - memory
-- `book/07-stack.md` - stack
-- `book/08-jumping.md` - jumping
-- `book/10-io.md` - MMIO ports
-- `book/11-alu.md` - ALU (needs `10-io`)
-- `book/12-fib-ram.md` - Fibonacci vector in RAM
+Intro, Numbers, First pixel, Registers, Branching, Memory, Stack, Jumping,
+IO, ALU, Fib in RAM, Snake capstone — plus memory map and assembler notes.
+No toolchain chapter on purpose: the web is zero-toolchain (the terminal
+workflow is `main:book/02-toolchain.md`).
 
 ## Solutions
 
-- `solutions/` - exercise solutions per lab,
-  layout adapted from [cpantel/Easy6502](https://github.com/cpantel/Easy6502)
-  (community solutions for the easy6502 ebook).
-
-Requires: `clang`, `llvm`, `ncursesw`, `just`.
+Exercises link to `main:solutions/` (per-lab answers, layout adapted from
+[cpantel/Easy6502](https://github.com/cpantel/Easy6502)).
