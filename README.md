@@ -38,7 +38,7 @@ just clean             # remove artifacts
 - `book/06-memory.md` - memory
 - `book/07-stack.md` - stack
 - `book/08-jumping.md` - jumping
-- `book/10-io.md` - MMIO and ecall
+- `book/10-io.md` - MMIO ports
 - `book/11-alu.md` - ALU (needs `10-io`)
 - `book/12-fib-ram.md` - Fibonacci vector in RAM
 

@@ -1,8 +1,8 @@
-// IO - the VM's outside world: MMIO ports and ecall
+// IO - the VM's outside world: memory-mapped ports
 // 0xFE: random byte (new value every instruction)
 // 0xFF: ASCII of last key pressed (0 headless, set by UI in debug)
 // 0x1000: print-char port (store a byte -> stdout)
-// ecall with a7=1: print char in a0 (like a bare-metal syscall)
+// Everything is a store or load: no syscalls, bare metal like the framebuffer.
 
 .section .text
 .globl _start
@@ -21,15 +21,10 @@ _start:
     li t1, 75          // 'K'
     sw t1, 0(t0)
 
-    // 3. print '!' via ecall (a7=1, a0=char)
-    li a0, 33          // '!'
-    li a7, 1
-    ecall
-
     j .
 
 // Exercises:
 // 1. Print "HI" instead: change the two characters (72='H', 73='I')
-// 2. Print a digit via ecall: set a0 to '5' (53) and keep a7=1
+// 2. Print digit '5' (53) via a 0x1000 store
 // 3. Echo the last key: load 0xFF, mask the low nibble, store to FB[1]
 //    (press a key in 'just debug 10-io' and watch the pixel change)

@@ -35,7 +35,7 @@ just clean             # remove artifacts
 | `05-memory` | `06-memory` | `lw`/`sw`/`sb`/`lbu`, base+offset |
 | `06-stack` | `07-stack` | manual `sp` push/pop |
 | `07-jumping` | `08-jumping` | `jal`/`jalr` nested calls |
-| `10-io` | `10-io` | MMIO ports (`0xFE`/`0xFF`/`0x1000`) and `ecall` print |
+| `10-io` | `10-io` | MMIO ports (`0xFE` random, `0xFF` key, `0x1000` print) |
 | `08-alu` | `11-alu` | `and`/`or`/`xor`, shifts, `sub`/`slt` (needs `10-io` for `0xFE`) |
 | `03-fib-ram` | `12-fib-ram` | vector in RAM `0x300` (`slli` index×4) |
 
