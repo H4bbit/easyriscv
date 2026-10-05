@@ -17,9 +17,8 @@ in `riscv.js`. Click **Assemble**, then **Run**.
 
 ## Layout
 
-- `index.html` — the book: prose adapted from `main:book/` with one
-  `.widget` per chapter, each prefilled with that lab's `prog.s`
-  (byte-equal to `main:labs/*/prog.s`)
+- `index.html` — the book: prose with one `.widget` per chapter, each
+  prefilled with that lab's source (mirrors `main:labs/*/prog.s`)
 - `riscv.js` — assembler + simulator (JS port of `main:vm.c`):
   4KB flat mem, code at `0x600`, zero-page RAM `0x00`, stack top `0x1FC`,
   framebuffer `0x200` (32x32, 16 colors), MMIO `0xFE` random /
@@ -27,8 +26,9 @@ in `riscv.js`. Click **Assemble**, then **Run**.
   One `RiscvWidget` per `.widget` node; debugger shows the full
   32-register file with change highlight
 - `style.css` — widget layout (600px, responsive)
-- `labs.js` — lab sources for a standalone simulator page (optional,
-  currently unreferenced from the book)
+
+Source of truth for prose, labs, and solutions is the `main` branch;
+this branch holds only the built site.
 
 ## Chapters
 

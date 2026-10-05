@@ -218,14 +218,14 @@ the display interprets it as a pixel. Plain RAM is the zero page at
 <ol>
 <li>Change the color of the three pixels. Try <code>li t0, 2</code> (red)
 or <code>li t0, 0xE</code> (light blue).
-(<a href="solutions/01-pixel/ex01-change-color.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/01-pixel/ex01-change-color.s">solution</a>)</li>
 <li>Move one pixel to the bottom-right corner. Hint: offset
 <code>1023</code> is the last pixel (<code>31,31</code>).
-(<a href="solutions/01-pixel/ex02-bottom-right.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/01-pixel/ex02-bottom-right.s">solution</a>)</li>
 <li>Add instructions to draw a diagonal: <code>sb</code> at offsets
 <code>0</code>, <code>33</code>, <code>66</code>... (32 bytes per row, +33 =
 down+right).
-(<a href="solutions/01-pixel/ex03-diagonal.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/01-pixel/ex03-diagonal.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -331,10 +331,10 @@ a register, unlike 6502 JSR/RTS which push the PC in hardware.
 <ol>
 <li>Rewrite the loop copies with <code>mv</code> (<code>mv t0, t1</code> for
 <code>addi t0, t1, 0</code>) and confirm the result is unchanged.
-(<a href="solutions/04-registers/ex01-addi-move.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/04-registers/ex01-addi-move.s">solution</a>)</li>
 <li>What happens if you write to <code>zero</code>? Try
 <code>addi zero, t0, 0</code> then <code>addi a0, zero, 0</code>.
-(<a href="solutions/04-registers/ex02-write-zero.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/04-registers/ex02-write-zero.s">solution</a>)</li>
 <li>Compare <code>sp</code> after <a href="#stack">the Stack chapter</a>:
 run it and check the final pixel (which holds <code>sp &amp; 0xF</code>).</li>
 </ol>
@@ -426,12 +426,12 @@ last stores.</p>
 <h3>Exercises</h3>
 <ol>
 <li>Replace <code>bne</code> with <code>beq</code>. What happens?
-(<a href="solutions/05-branching/ex01-beq.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/05-branching/ex01-beq.s">solution</a>)</li>
 <li>Use <code>blt t0, t2, loop</code> &mdash; how does signed less-than
-differ? (<a href="solutions/05-branching/ex02-blt.s">solution</a>)</li>
+differ? (<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/05-branching/ex02-blt.s">solution</a>)</li>
 <li>Write a loop that counts up from <code>0</code> to <code>5</code> using
 <code>addi</code> and <code>bne</code>.
-(<a href="solutions/05-branching/ex03-count-up.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/05-branching/ex03-count-up.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -539,14 +539,14 @@ a register, unlike 6502 JSR/RTS which push the PC in hardware.
 <li>Replace <code>lbu</code> with <code>lb</code> on the byte
 <code>0xAB</code>: how does sign-extend (<code>lb</code>) differ from
 zero-extend (<code>lbu</code>)?
-(<a href="solutions/06-memory/ex01-lb-lbu.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/06-memory/ex01-lb-lbu.s">solution</a>)</li>
 <li>Use <code>slli t4, t2, 2</code> to scale an index by 4 (preview:
 shifting is covered in <a href="#alu">ALU</a>) then <code>add</code> +
 <code>sw</code> for word-indexed access.
-(<a href="solutions/06-memory/ex02-scaled-index.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/06-memory/ex02-scaled-index.s">solution</a>)</li>
 <li>Write a loop that copies 4 words from <code>0x00</code> to
 <code>0x200</code>.
-(<a href="solutions/06-memory/ex03-copy-loop.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/06-memory/ex03-copy-loop.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -661,14 +661,14 @@ leak.</p>
 <ol>
 <li>Push 8 colors and pop to draw a mirrored pattern (first loop pushes,
 second loop pops and draws).
-(<a href="solutions/07-stack/ex01-mirror.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/07-stack/ex01-mirror.s">solution</a>)</li>
 <li>What if you <code>sw</code> to <code>0x1000</code>? That address is
 outside the 4KB memory &mdash; the VM intercepts it as a print-char port
 instead of RAM (preview: ports are covered in <a href="#io">IO</a>).
-(<a href="solutions/07-stack/ex02-mmio-print.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/07-stack/ex02-mmio-print.s">solution</a>)</li>
 <li>Save/restore <code>s0</code> on the stack around a function call
 (preview of next chapter).
-(<a href="solutions/07-stack/ex03-save-s0.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/07-stack/ex03-save-s0.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -793,13 +793,13 @@ a register, unlike 6502 JSR/RTS which push the PC in hardware.
 <ol>
 <li>Remove the <code>sw ra</code>/<code>lw ra</code> in
 <code>outer</code>. What does the last pixel become?
-(<a href="solutions/08-jumping/ex01-no-save-ra.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/08-jumping/ex01-no-save-ra.s">solution</a>)</li>
 <li>Replace <code>j after</code> with
 <code>beq zero, zero, after</code> &mdash; does it still jump?
-(<a href="solutions/08-jumping/ex02-beq-jump.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/08-jumping/ex02-beq-jump.s">solution</a>)</li>
 <li>Write a leaf function that doesn&rsquo;t save <code>ra</code> and a
 non-leaf that must.
-(<a href="solutions/08-jumping/ex03-leaf-nonleaf.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/08-jumping/ex03-leaf-nonleaf.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -904,13 +904,13 @@ address with a side effect &mdash; only the device differs.</p>
 <ol>
 <li>Print <code>"HI"</code> instead: change the two characters
 (<code>72='H'</code>, <code>73='I'</code>).
-(<a href="solutions/10-io/ex01-hi.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/10-io/ex01-hi.s">solution</a>)</li>
 <li>Print digit <code>'5'</code> (<code>53</code>) via a
 <code>0x1000</code> store.
-(<a href="solutions/10-io/ex02-digit.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/10-io/ex02-digit.s">solution</a>)</li>
 <li>Echo the last key: load <code>0xFF</code>, mask the low nibble, store
 to the second pixel. (Press a key and watch the pixel change.)
-(<a href="solutions/10-io/ex03-echo-key.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/10-io/ex03-echo-key.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -1034,12 +1034,12 @@ counterpart of <code>add</code>.</li>
 <ol>
 <li>Change the mask <code>0x03</code> to <code>0x07</code>: what range lands
 in the first pixel?
-(<a href="solutions/11-alu/ex01-mask7.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/11-alu/ex01-mask7.s">solution</a>)</li>
 <li>Extract the high nibble of a random byte: <code>srli</code> right by 4.
-(<a href="solutions/11-alu/ex02-high-nibble.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/11-alu/ex02-high-nibble.s">solution</a>)</li>
 <li><code>sub</code> + <code>slt</code> by hand: <code>t3=10, t4=3</code>
 &mdash; compute <code>t3-t4</code> and <code>slt</code> both directions.
-(<a href="solutions/11-alu/ex03-sub-slt.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/11-alu/ex03-sub-slt.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -1137,13 +1137,13 @@ store:</p>
 <h3>Exercises</h3>
 <ol>
 <li>Change <code>N</code> to <code>10</code>: what is the last vector word?
-(<a href="solutions/12-fib-ram/ex01-n10.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/12-fib-ram/ex01-n10.s">solution</a>)</li>
 <li>Store bytes instead: <code>sb</code> the low byte of each term &mdash;
 what does the vector look like?
-(<a href="solutions/12-fib-ram/ex02-bytes.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/12-fib-ram/ex02-bytes.s">solution</a>)</li>
 <li>Sum the vector back: loop <code>i=0..7</code>, <code>lw</code> each
 word, accumulate in <code>a1</code>.
-(<a href="solutions/12-fib-ram/ex03-sum.s">solution</a>)</li>
+(<a href="https://github.com/H4bbit/easyriscv/blob/main/solutions/12-fib-ram/ex03-sum.s">solution</a>)</li>
 </ol>
 </section>
 
@@ -1535,9 +1535,9 @@ Disassembly shows the same folds as the C VM on the
 <footer>
 <p><small>EasyRISC-V &mdash; RV32I only. Prefer the terminal? The
 <code>main</code> branch has the same VM in C with an ncurses debugger
-(<code>just debug</code>). Book sources live in <code>main:book/</code>,
-labs in <code>main:labs/</code>, solutions in
-<code>main:solutions/</code>.</small></p>
+(<code>just debug</code>). Book sources live in <a href="https://github.com/H4bbit/easyriscv/tree/main/book"><code>main:book/</code></a>,
+labs in <a href="https://github.com/H4bbit/easyriscv/tree/main/labs"><code>main:labs/</code></a>, solutions in
+<a href="https://github.com/H4bbit/easyriscv/tree/main/solutions"><code>main:solutions/</code></a>.</small></p>
 </footer>
 </div>
 <script src="riscv.js"></script>
