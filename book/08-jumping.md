@@ -40,8 +40,8 @@ Without saving, `inner` would overwrite `ra` and `outer` could never return.
 
 ## Exercises
 
-1. Remove the `sw ra`/`lw ra` in `outer`. What does the last framebuffer word become?
-2. Replace `j after` with `beq zero, zero, after` — does it still jump?
-3. Write a leaf function that doesn't save `ra` and a non-leaf that must.
+1. Remove the `sw ra`/`lw ra` in `outer`. What does the last framebuffer word become? ([solution](../solutions/08-jumping/ex01-no-save-ra.s))
+2. Replace `j after` with `beq zero, zero, after` — does it still jump? ([solution](../solutions/08-jumping/ex02-beq-jump.s))
+3. Write a leaf function that doesn't save `ra` and a non-leaf that must. ([solution](../solutions/08-jumping/ex03-leaf-nonleaf.s))
 
 This completes the bare-metal arc. The next capstone will be a Snake game at `0x200` using the framebuffer.

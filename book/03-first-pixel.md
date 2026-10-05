@@ -48,8 +48,8 @@ On real hardware video is more complex, but the idea is the same: memory-mapped 
 
 ## Exercises
 
-1. Change the color of the three pixels. Try `li t0, 2` (red) or `li t0, 0xE` (light blue).
-2. Move one pixel to the bottom-right corner. Hint: 1 byte per pixel, offset `1023` is the last pixel (`31,31`). Try `sb t0, 1023(t1)` or `sb t0, 31(t1)` for row 0 end.
-3. Add more instructions to draw a diagonal: `sb` at offsets `0`, `33`, `66`... (32 bytes per row, +33 = down+right).
+1. Change the color of the three pixels. Try `li t0, 2` (red) or `li t0, 0xE` (light blue). ([solution](../solutions/01-pixel/ex01-change-color.s))
+2. Move one pixel to the bottom-right corner. Hint: 1 byte per pixel, offset `1023` is the last pixel (`31,31`). Try `sb t0, 1023(t1)` or `sb t0, 31(t1)` for row 0 end. ([solution](../solutions/01-pixel/ex02-bottom-right.s))
+3. Add more instructions to draw a diagonal: `sb` at offsets `0`, `33`, `66`... (32 bytes per row, +33 = down+right). ([solution](../solutions/01-pixel/ex03-diagonal.s))
 
 Next: [04-registers.md](04-registers.md)

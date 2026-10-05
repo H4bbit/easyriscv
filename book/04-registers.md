@@ -48,8 +48,8 @@ loop:
 
 ## Exercises
 
-1. Move `t0` to `a0` without `mv`. Hint: `addi a0, t0, 0`.
-2. What happens if you write to `zero`? Try `li zero, 5` then `mv a0, zero`.
-3. Compare `sp` after `06-stack`: run it headless and check the final `t0` (which holds `sp & 0xF`).
+1. Move `t0` to `a0` without `mv`. Hint: `addi a0, t0, 0`. ([solution](../solutions/04-registers/ex01-addi-move.s))
+2. What happens if you write to `zero`? Try `li zero, 5` then `mv a0, zero`. ([solution](../solutions/04-registers/ex02-write-zero.s))
+3. Compare `sp` after `07-stack`: run it headless and check the final `t0` (which holds `sp & 0xF`).
 
 Next: [05-branching.md](05-branching.md)
