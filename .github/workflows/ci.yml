@@ -1,0 +1,19 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build-and-labs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q clang llvm just libncursesw6 libncurses-dev
+      - name: Build VM
+        run: just build
+      - name: Run all labs headless
+        run: just all

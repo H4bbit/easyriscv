@@ -7,6 +7,10 @@ bindir := env_var_or_default("TMPDIR", "/tmp")
 # Compiler override: `cc=gcc just build` (default clang). Any C23-capable
 # compiler works; see README "Requires" for the C23/ncursesw versions.
 cc := env_var_or_default("CC", "clang")
+# Cross-assembler for labs (host CC cannot emit rv32i): override with
+# `riscv_cc=riscv64-unknown-elf-gcc just run 01-pixel` if you have a
+# bare-metal RISC-V GCC instead of clang.
+riscv_cc := env_var_or_default("RISCV_CC", "clang")
 cflags := "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -fcolor-diagnostics -I."
 ldflags := "-lncursesw"
 
@@ -28,7 +32,7 @@ assemble lab="01-pixel":
     elf="{{bindir}}/{{lab}}.elf"
     bin="{{bindir}}/{{lab}}.bin"
     echo "==> {{lab}}: $src"
-    clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o $elf $src
+    {{riscv_cc}} --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 -o $elf $src
     llvm-objcopy -O binary --only-section=.text $elf $bin
     echo "ELF:"; llvm-objdump -d $elf | head -n 40
     echo "BIN:"; xxd $bin | head -n 5
