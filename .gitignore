@@ -9,3 +9,4 @@ vm
 # OS
 .DS_Store
 *~
+/asm

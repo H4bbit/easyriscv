@@ -8,12 +8,12 @@ Prefer the browser? Read the [online book](https://h4bbit.github.io/easyriscv/) 
 
 - RV32I VM in C with ncurses debugger (no stdlib, no Linux syscalls)
 - 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat
-- Labs build with `clang --target=riscv32 -march=rv32i -nostdlib`
+- Own assembler in C (`asm.c`, clang-identical — `just check-asm` proves it)
 
 ## Quick start
 
 ```bash
-just build             # build VM
+just build             # build VM + assembler
 just run 01-pixel      # headless
 just debug 01-pixel    # ncurses: SPACE step, r run, g slow, R reset, q quit
 just clean             # remove artifacts
@@ -35,7 +35,7 @@ just clean             # remove artifacts
 
 - `book/00-intro.md` - intro and lesson map
 - `book/01-numbers.md` - hex and immediates
-- `book/02-toolchain.md` - clang/llvm flow
+- `book/02-toolchain.md` - assembler + clang/llvm inspection flow
 - `book/03-first-pixel.md` - first program
 - `book/04-registers.md` - register file
 - `book/05-branching.md` - branching
@@ -59,5 +59,6 @@ just clean             # remove artifacts
   (tested: Clang 21; GCC 15 expected, unverified — please report)
 - ncurses with wide-char support (`ncursesw`, ABI 6): the debugger uses
   `waddstr` with `▀` half-blocks and 16 color pairs
-- LLVM binutils for the labs (`clang --target=riscv32`, `llvm-objcopy`,
-  `llvm-objdump`, `llvm-readelf`) and `just` as task runner
+- LLVM binutils for inspection/cross-check only (`clang --target=riscv32`,
+  `llvm-objcopy`, `llvm-objdump`, `llvm-readelf`: `just disasm/elf/hex/check-asm`)
+  and `just` as task runner

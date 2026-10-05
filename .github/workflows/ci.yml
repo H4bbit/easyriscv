@@ -15,5 +15,7 @@ jobs:
           sudo apt-get install -y -q clang llvm just libncursesw6 libncurses-dev
       - name: Build VM
         run: just build
+      - name: Cross-check assembler (./asm vs clang, labs+solutions)
+        run: just check-asm
       - name: Run all labs headless
         run: just all
