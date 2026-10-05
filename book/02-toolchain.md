@@ -5,10 +5,14 @@ You don't need an IDE. Four commands assemble, run, and inspect bare-metal progr
 ## Build
 
 ```bash
-just build          # clang → vm
+just build          # cc -std=c23 → vm
 ```
 
-`just build` compiles `vm.c/ui.c/main.c` with `clang -std=c23` and `ncursesw`.
+`just build` compiles `vm.c/ui.c/main.c` with `-std=c23` (C23:
+`constexpr`, `auto`, `nullptr`, `static_assert`) linked against
+`ncursesw` (wide-char ABI 6: `▀` half-blocks, 16 color pairs).
+Set `cc=gcc` (or any C23-capable compiler) to build with another
+toolchain — the default is `clang`.
 
 ## Assemble
 

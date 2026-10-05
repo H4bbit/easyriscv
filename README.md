@@ -52,4 +52,12 @@ just clean             # remove artifacts
   layout adapted from [cpantel/Easy6502](https://github.com/cpantel/Easy6502)
   (community solutions for the easy6502 ebook).
 
-Requires: `clang`, `llvm`, `ncursesw`, `just`.
+## Requires
+
+- C23 (`-std=c23`): `constexpr`, `auto`, `nullptr`, `static_assert`,
+  typed `enum`, `[[nodiscard]]` — any compiler with mature C23 support
+  (tested: Clang 21; GCC 15 expected, unverified — please report)
+- ncurses with wide-char support (`ncursesw`, ABI 6): the debugger uses
+  `waddstr` with `▀` half-blocks and 16 color pairs
+- LLVM binutils for the labs (`clang --target=riscv32`, `llvm-objcopy`,
+  `llvm-objdump`, `llvm-readelf`) and `just` as task runner
