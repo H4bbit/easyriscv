@@ -41,6 +41,8 @@ just clean             # remove artifacts
 
 ## Solutions
 
-- `solutions/` - exercise solutions per lab (01-pixel, 04-branching, 05-memory)
+- `solutions/` - exercise solutions per lab (01-pixel, 04-branching, 05-memory),
+  layout adapted from [cpantel/Easy6502](https://github.com/cpantel/Easy6502)
+  (community solutions for the easy6502 ebook).
 
 Requires: `clang`, `llvm`, `ncursesw`, `just`.
