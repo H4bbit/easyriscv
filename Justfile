@@ -1,7 +1,9 @@
 set shell := ["bash", "-cu"]
 
 vm := "vm"
-bindir := "/data/data/com.termux/files/usr/tmp"
+# Portable scratch dir for .elf/.bin: honors $TMPDIR (Termux, macOS,
+# Nix) with /tmp fallback. Never hardcode an OS-specific tmp path here.
+bindir := env_var_or_default("TMPDIR", "/tmp")
 cc := "clang"
 cflags := "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -fcolor-diagnostics -I."
 ldflags := "-lncursesw"
