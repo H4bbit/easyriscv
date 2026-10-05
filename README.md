@@ -1,5 +1,7 @@
 # easyriscv (web)
 
+[![Open the book](https://img.shields.io/badge/ebook-open-brightgreen)](https://h4bbit.github.io/easyriscv/)
+
 Bare-metal RV32I ebook in the browser, inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
 
 Scope: RV32I base integer instruction set only — no M/A/F/D/C extensions,
