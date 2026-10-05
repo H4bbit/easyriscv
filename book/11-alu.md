@@ -56,7 +56,7 @@ masks like `0x03` or `0x0F`.
 Two families you have already seen but never isolated:
 
 * `slli t4, t2, 2` — shift left by 2 = ×4. This is how `03-fib-ram` scales
-  an index to words, and how the Snake draft computes `y*32` (`slli t3, t3, 5`).
+  an index to words, and how the Snake capstone computes `y*32` (`slli t3, t3, 5`).
   Right shifts: `srli` (zeros in) vs `srai` (sign bit in).
 * `slt t5, t3, t4` — `1` if `t3 < t4` (signed), else `0`. Branches like `blt`
   do this compare internally; `slt` keeps the `0/1` in a register instead.

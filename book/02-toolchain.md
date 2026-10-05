@@ -21,13 +21,13 @@ This runs:
 ```bash
 clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 \
   -o /tmp/01-pixel.elf labs/01-pixel/prog.s
-llvm-objcopy -O binary /tmp/01-pixel.elf /tmp/01-pixel.bin
+llvm-objcopy -O binary --only-section=.text /tmp/01-pixel.elf /tmp/01-pixel.bin
 llvm-objdump -d /tmp/01-pixel.elf   # disassembly
 xxd /tmp/01-pixel.bin               # hexdump
 ```
 
 * `clang` assembles `prog.s` to ELF at `0x600` (bare-metal, no libc)
-* `llvm-objcopy` strips ELF to a flat `.text` binary the VM loads at `0x600`
+* `llvm-objcopy` strips ELF to a flat `.text` binary the VM loads at `0x600` (`--only-section=.text` matters: without it the ELF headers leak into the first bytes of the flat binary and the VM executes garbage)
 * `llvm-objdump -d` disassembles the ELF; `xxd` shows the flat binary (hexdump)
 * `llvm-readelf -h -S -l` inspects ELF headers and sections
 
