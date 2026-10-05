@@ -710,7 +710,8 @@ function RiscvWidget(node) {
       return { label: null, rest: line };
     }
 
-    // Size of one line in bytes (li may take 8). -1 = error.
+    // Size of one line in bytes (li may take 8, la/call/tail may take 8).
+    // -1 = error. addr is the pass-1 cursor (call/tail range sizing).
     function lineSize(rest, addr, symbols, lineno) {
       if (rest === '') return 0;
       if (/^\.(section|globl|text|option)\b/.test(rest)) return 0;
@@ -719,6 +720,14 @@ function RiscvWidget(node) {
         var parts = dm[2].split(',');
         if (!parts.length) return -1;
         return dm[1] === 'byte' ? parts.length : parts.length * 4;
+      }
+      var dsp = rest.match(/^\.space\s+(.+)$/);
+      if (dsp) {
+        var sp2 = dsp[1].split(',');
+        var sn = num(sp2[0], symbols);
+        if (sn === null || sn < 0) return -1;
+        if (sp2.length > 1 && num(sp2[1], symbols) === null) return -1;
+        return sn;
       }
       if (/^\./.test(rest)) return -1;
       var sp = rest.match(/^(\w+)\s*(.*)$/);
@@ -729,12 +738,38 @@ function RiscvWidget(node) {
         if (args.length !== 2) return -1;
         var v = num(args[1], symbols);
         if (v === null) {
-          message('**li with a label address is out of scope (use la, also out of scope here) at line ' +
+          message('**li with a label address needs la (PC-relative), not li at line ' +
             (lineno + 1) + '**');
           explained = true;
           return -1;
         }
         return liSplit(v).n * 4;
+      }
+      if (op === 'la') {
+        // auipc+addi (8) for labels, li split for equ/numbers.
+        // Forward labels are not indexed yet: unknown => 8 (worst case).
+        var largs = sp[2].split(',');
+        if (largs.length !== 2) return -1;
+        var lt = largs[1].trim();
+        if (/^[A-Za-z_.][A-Za-z0-9_.]*$/.test(lt) && lt !== '.') {
+          if (labelMap.hasOwnProperty('K' + lt)) return 8;
+          var lev = num(lt, symbols);
+          if (lev === null) return 8; // forward label (pass 2 resolves)
+          return liSplit(lev).n * 4;
+        }
+        if (num(lt, symbols) !== null) return liSplit(num(lt, symbols)).n * 4;
+        return 8; // label expression (SYM+N): auipc+addi
+      }
+      if (op === 'call' || op === 'tail') {
+        // jal/j (4) when near, auipc+jalr (8) when far.
+        // Forward labels: 8 (pass 1b shrinks to 4 at fixpoint).
+        var cargs = sp[2].split(',');
+        if (cargs.length !== 1 || cargs[0].trim() === '') return -1;
+        var ct = pctarget(cargs[0], addr, symbols);
+        if (ct === null) return 8;
+        var cd = ct - addr;
+        if (cd >= -1048576 && cd <= 1048574 && (cd & 1) === 0) return 4;
+        return 8;
       }
       return 4;
     }
@@ -791,6 +826,14 @@ function RiscvWidget(node) {
       return { n: 2, addiOnly: false, hi: hi, lo: lo };
     }
 
+    // Split for auipc+addi (la/call tail-far): hi20 = floor((d+0x800)/4096),
+    // lo12 = d - hi20*4096 (always in [-2048,2047] by construction).
+    function pcrelSplit(tgt, pc) {
+      var d = (tgt - pc) | 0;
+      var full = Math.floor((d + 0x800) / 4096);
+      return { hi: full & 0xfffff, lo: d - full * 4096 };
+    }
+
     function target(s, addr, symbols) {
       s = s.trim();
       if (s === '.') return addr;
@@ -801,10 +844,39 @@ function RiscvWidget(node) {
       return num(s, symbols);
     }
 
+    // Resolve la/call/tail target: bare label first (labels shadow equ,
+    // like clang), then label SYM+N, then target() (equ/number/'.').
+    function pctarget(s, addr, symbols) {
+      s = s.trim();
+      if (/^[A-Za-z_.][A-Za-z0-9_.]*$/.test(s) && s !== '.') {
+        if (labelMap.hasOwnProperty('K' + s)) return labelMap['K' + s];
+      } else {
+        var lm = s.match(/^([A-Za-z_.][A-Za-z0-9_.]*)([+-])(.+)$/);
+        if (lm && labelMap.hasOwnProperty('K' + lm[1])) {
+          var dl = num(lm[3], symbols);
+          if (dl !== null) return lm[2] === '+' ? labelMap['K' + lm[1]] + dl : labelMap['K' + lm[1]] - dl;
+        }
+      }
+      return target(s, addr, symbols);
+    }
+
     // Assemble one logical line at addr. Returns true on success.
     function assembleLine(rest, addr, symbols, lineno) {
       if (rest === '') return true;
       if (/^\.(section|globl|text|option)\b/.test(rest)) return true;
+      var dsp = rest.match(/^\.space\s+(.+)$/);
+      if (dsp) {
+        var sargs = dsp[1].split(',');
+        var sn = num(sargs[0], symbols);
+        var sfill = sargs.length > 1 ? num(sargs[1], symbols) : 0;
+        if (sn === null || sn < 0 || sfill === null) return false;
+        for (var sk = 0; sk < sn; sk++) {
+          memory.set(defaultPC, sfill);
+          defaultPC += 1;
+          codeLen += 1;
+        }
+        return true;
+      }
       var dm = rest.match(/^\.(byte|word)\s+(.+)$/);
       if (dm) {
         var parts = dm[2].split(',');
@@ -945,11 +1017,72 @@ function RiscvWidget(node) {
         emit(encI(0, 1, 0, 0, 0x67));
         return true;
       }
-      if (op === 'call' || op === 'tail' || op === 'la') {
-        message('**' + op + ' is out of scope for the fixed 0x600 model (auipc sequences) at line ' +
-          (lineno + 1) + '**');
-        explained = true;
-        return false;
+      if (op === 'la') {
+        // clang-identical: la rd, number/equ => li split;
+        // la rd, label-expr => auipc+addi (PC-relative).
+        if (!need(2)) return false;
+        var lad = R2();
+        if (lad < 0) return false;
+        var lat = argv[1].trim();
+        if (/^[A-Za-z_.][A-Za-z0-9_.]*$/.test(lat) && lat !== '.') {
+          if (labelMap.hasOwnProperty('K' + lat)) {
+            var lps = pcrelSplit(labelMap['K' + lat], addr);
+            emit(encU(lps.hi, lad, 0x17));
+            emit(encI(lps.lo, lad, 0, lad, 0x13));
+            return true;
+          }
+          var laev = num(lat, symbols);
+          if (laev === null) return false;
+          var laes = liSplit(laev);
+          if (laes.addiOnly) emit(encI(laev, 0, 0, lad, 0x13));
+          else if (laes.n === 1) emit(encU(laes.hi, lad, 0x37));
+          else { emit(encU(laes.hi, lad, 0x37)); emit(encI(laes.lo, lad, 0, lad, 0x13)); }
+          return true;
+        }
+        var lan = num(lat, symbols);
+        if (lan !== null) {
+          var lans = liSplit(lan);
+          if (lans.addiOnly) emit(encI(lan, 0, 0, lad, 0x13));
+          else if (lans.n === 1) emit(encU(lans.hi, lad, 0x37));
+          else { emit(encU(lans.hi, lad, 0x37)); emit(encI(lans.lo, lad, 0, lad, 0x13)); }
+          return true;
+        }
+        var lal = pctarget(lat, addr, symbols);
+        if (lal === null) return false;
+        var lals = pcrelSplit(lal, addr);
+        emit(encU(lals.hi, lad, 0x17));
+        emit(encI(lals.lo, lad, 0, lad, 0x13));
+        return true;
+      }
+      if (op === 'call') {
+        // clang-identical: jal if in range, else auipc+jalr (ra).
+        if (!need(1)) return false;
+        var calt = pctarget(argv[0], addr, symbols);
+        if (calt === null) return false;
+        var cald = calt - addr;
+        if (cald >= -1048576 && cald <= 1048574 && (cald & 1) === 0) {
+          emit(encJ(cald, 1));
+        } else {
+          var cas = pcrelSplit(calt, addr);
+          emit(encU(cas.hi, 1, 0x17));
+          emit(encI(cas.lo, 1, 0, 1, 0x67));
+        }
+        return true;
+      }
+      if (op === 'tail') {
+        // clang-identical: j if in range, else auipc+jalr via t1, no link.
+        if (!need(1)) return false;
+        var talt = pctarget(argv[0], addr, symbols);
+        if (talt === null) return false;
+        var tald = talt - addr;
+        if (tald >= -1048576 && tald <= 1048574 && (tald & 1) === 0) {
+          emit(encJ(tald, 0));
+        } else {
+          var tas = pcrelSplit(talt, addr);
+          emit(encU(tas.hi, 6, 0x17));
+          emit(encI(tas.lo, 6, 0, 0, 0x67));
+        }
+        return true;
       }
       // Branches (range-checked): canonical + beqz/bnez/blez/bgez/bltz/bgtz + bgt/ble/bgtu/bleu.
       // B-type: signed 13-bit, LSB must be zero (even offsets, -4096..+4094).
@@ -1057,6 +1190,7 @@ function RiscvWidget(node) {
 
       message('Indexing labels ...');
       var addr = PROG_BASE;
+      var labelLine = {}; // label -> line index (for the shrink re-flow)
       for (var i = 0; i < lines.length; i++) {
         var parts = splitLabel(lines[i]);
         if (parts.label) {
@@ -1067,6 +1201,7 @@ function RiscvWidget(node) {
           }
           labelMap['K' + parts.label] = addr;
           labelOrder.push(parts.label);
+          labelLine[parts.label] = i;
           lines[i] = parts.rest;
         }
         var sz = lineSize(lines[i], addr, symbols, i);
@@ -1084,17 +1219,71 @@ function RiscvWidget(node) {
       }
       message('Found ' + labelOrder.length + ' label' + (labelOrder.length === 1 ? '' : 's') + '.');
 
+      // Shrink pass: call/tail to a forward label sized 8 above; now that
+      // all labels are known, shrink near ones to 4 and re-flow to fixpoint.
+      // Shrinking only moves later lines down, which keeps near-calls near
+      // (monotone: terminates). la/jal/branches never change size.
+      var sizes = [];
+      for (var si = 0; si < lines.length; si++) sizes.push(0);
+      for (;;) {
+        var lineaddr = [];
+        var a2 = PROG_BASE;
+        var bad = false;
+        for (var k = 0; k < lines.length; k++) {
+          var sk = lineSize(lines[k], a2, symbols, k);
+          if (sk < 0) { bad = true; break; }
+          sizes[k] = sk;
+          lineaddr.push(a2);
+          a2 += sk;
+          if (a2 > MEM_MAX) {
+            message('**Code too large for the 4KB model at line ' + (k + 1) + '**');
+            ui.initialize();
+            return false;
+          }
+        }
+        if (bad) {
+          // lineSize already messaged (li/la errors set explained)
+          message('**Syntax error during shrink pass**');
+          ui.initialize();
+          return false;
+        }
+        // refresh label addresses under current sizes
+        for (var li2 = 0; li2 < labelOrder.length; li2++) {
+          labelMap['K' + labelOrder[li2]] = lineaddr[labelLine[labelOrder[li2]]];
+        }
+        // shrink call/tail lines that are now near
+        var changed = false;
+        for (var n = 0; n < lines.length; n++) {
+          if (sizes[n] !== 8) continue;
+          var opm = lines[n].match(/^(\w+)/);
+          if (!opm || (opm[1] !== 'call' && opm[1] !== 'tail')) continue;
+          var carg = lines[n].match(/^\w+\s*(.*)$/);
+          var ct2 = carg ? pctarget(carg[1], lineaddr[n], symbols) : null;
+          if (ct2 === null) continue; // still unknown: keep 8
+          var dd = ct2 - lineaddr[n];
+          if (dd >= -1048576 && dd <= 1048574 && (dd & 1) === 0) {
+            sizes[n] = 4;
+            changed = true;
+          }
+        }
+        if (!changed) break;
+      }
+
       message('Assembling code ...');
       defaultPC = PROG_BASE;
       codeLen = 0;
       addr = PROG_BASE;
+      // recompute line addresses from final sizes (do NOT re-run lineSize:
+      // a forward call sizes 8 in isolation but 4 after the shrink pass).
+      var finaddr = [];
+      var fa = PROG_BASE;
+      for (var q = 0; q < lines.length; q++) { finaddr.push(fa); fa += sizes[q]; }
+      for (var lq = 0; lq < labelOrder.length; lq++) {
+        labelMap['K' + labelOrder[lq]] = finaddr[labelLine[labelOrder[lq]]];
+      }
       for (var j = 0; j < lines.length; j++) {
-        var sz2 = lineSize(lines[j], addr, symbols, j);
-        if (sz2 < 0) {
-          message('**Syntax error line ' + (j + 1) + ': ' + lines[j] + '**');
-          ui.initialize();
-          return false;
-        }
+        var sz2 = sizes[j];
+        addr = finaddr[j];
         if (sz2 > 0 && (addr & 3)) {
           message('**Misaligned instruction at line ' + (j + 1) + ': ' + lines[j] + '**');
           ui.initialize();
