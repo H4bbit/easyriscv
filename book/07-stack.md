@@ -11,23 +11,23 @@ just debug 06-stack
 Source (`labs/06-stack/prog.s`):
 
 ```asm
-    li sp, 0x900
+    li sp, 0x1FC
     addi sp, sp, -4
     sw t0, 0(sp)   // push 11
     lw t0, 0(sp)   // pop
     addi sp, sp, 4
 ```
 
-Push is `addi sp, -4; sw`, pop is `lw; addi sp, 4`. The stack grows down. With `MEM_SIZE` `0x1000`, `0x900` is a safe top.
+Push is `addi sp, -4; sw`, pop is `lw; addi sp, 4`. The stack grows down. With `MEM_SIZE` `0x1000`, `0x1FC` is the stack top (code lives far above at `0x600`).
 
 ## Try It
 
 ```
-[halt] pc=0x005c t0=0 FB[0..3] = 1 6 11 0, sp=0x900
+[halt] pc=0x0658 t0=12 FB[0..3] = 1 6 11 12, sp=0x1FC
 ```
 
 Pops come out in LIFO order: `33`, `22`, `11` — masked to low nibbles
-(`33&0xF=1`, `22&0xF=6`, `11&0xF=11`). The last byte is `sp & 0xF` (`0x900` restored, so `0`).
+(`33&0xF=1`, `22&0xF=6`, `11&0xF=11`). The last byte is `sp & 0xF` (`0x1FC` restored, so `12`).
 
 Step and watch `sp` in `w_regs` decrement then restore. Forget `addi sp, 4` after `lw` and watch the leak.
 

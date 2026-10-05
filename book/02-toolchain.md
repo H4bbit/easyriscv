@@ -19,15 +19,15 @@ just assemble 01-pixel
 This runs:
 
 ```bash
-clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x0,--image-base=0x0 \
+clang --target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600 \
   -o /tmp/01-pixel.elf labs/01-pixel/prog.s
 llvm-objcopy -O binary /tmp/01-pixel.elf /tmp/01-pixel.bin
 llvm-objdump -d /tmp/01-pixel.elf   # disassembly
 xxd /tmp/01-pixel.bin               # hexdump
 ```
 
-* `clang` assembles `prog.s` to ELF at `0x0` (bare-metal, no libc)
-* `llvm-objcopy` strips ELF to a flat binary the VM loads at `0x0`
+* `clang` assembles `prog.s` to ELF at `0x600` (bare-metal, no libc)
+* `llvm-objcopy` strips ELF to a flat `.text` binary the VM loads at `0x600`
 * `llvm-objdump -d` disassembles the ELF; `xxd` shows the flat binary (hexdump)
 * `llvm-readelf -h -S -l` inspects ELF headers and sections
 
@@ -38,7 +38,7 @@ just run 01-pixel      # headless: run to halt, print registers and memory
 just debug 01-pixel    # ncurses debugger: step, run, inspect
 ```
 
-Headless prints `Framebuffer 0x200` and `RAM 0x300`. Debug shows `w_disasm` (yellow PC), `w_regs`, `w_mem` hexdump, `w_fb` pixels.
+Headless prints `Framebuffer 0x200` and zero-page `RAM 0x00`. Debug shows `w_disasm` (yellow PC), `w_regs`, `w_mem` hexdump, `w_fb` pixels.
 
 ## Inspect
 

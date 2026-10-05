@@ -31,9 +31,9 @@ just debug 03-fib-ram
 Source (`labs/03-fib-ram/prog.s`):
 
 ```asm
-    li s0, 0x300      // RAM base (code lives at 0x0-0x4C)
-    sw t0, 0(s0)      // RAM[0x300] = 0
-    sw t1, 4(s0)      // RAM[0x304] = 1
+    li s0, 0x00       // zero-page RAM base (code lives at 0x600, far away)
+    sw t0, 0(s0)      // RAM[0x00] = 0
+    sw t1, 4(s0)      // RAM[0x004] = 1
 loop:
     add t3, t0, t1
     slli t4, t2, 2    // counter * 4 (words are 4 bytes)
@@ -51,13 +51,13 @@ instructions do it — shift, add, store:
 2. `add t5, s0, t4` — address = base + offset
 3. `sw t3, 0(t5)` — store the word
 
-The base `0x300` is RAM, safely past the code (`prog` ends near `0x4C` —
-storing at `0x40` would scribble over instructions, which is why the
-headless `RAM 0x40` dump shows code bytes, not data).
+The base `0x00` is zero-page RAM, far below the code at `0x600` —
+no address juggling needed (the old `0x0`-linked layout forced RAM to
+dodge the code; that architectural mistake is fixed)..
 
 ## Try It
 
-Step and watch `w_mem` / headless `RAM 0x300`: `0 1 1 2 3 5 8 13`.
+Step and watch `w_mem` / headless `RAM 0x00`: `0 1 1 2 3 5 8 13`.
 Each loop iteration appends one word. Final `a0=13`, same as `02-fib` —
 the value is identical, the storage is new.
 

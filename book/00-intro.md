@@ -10,7 +10,7 @@ a 32x32 framebuffer, and self-contained lessons.
   print-char port at `0x1000`
 * `ui.c` — ncurses debugger: disassembly (PC in yellow), registers,
   memory hexdump, framebuffer pixels
-* `labs/` — one `prog.s` per lesson, assembled bare-metal at `0x0`
+* `labs/` — one `prog.s` per lesson, assembled bare-metal at `0x600` (above the screen, like easy6502)
 * `book/` — self-contained lessons, `00` to `12`, no prerequisites
 * `solutions/` — exercise answers per lab
 
@@ -37,9 +37,12 @@ just clean             # remove artifacts
 | `07-jumping` | `08-jumping` | `jal`/`jalr` nested calls |
 | `10-io` | `10-io` | MMIO ports (`0xFE` random, `0xFF` key, `0x1000` print) |
 | `08-alu` | `11-alu` | `and`/`or`/`xor`, shifts, `sub`/`slt` (needs `10-io` for `0xFE`) |
-| `03-fib-ram` | `12-fib-ram` | vector in RAM `0x300` (`slli` index×4) |
+| `03-fib-ram` | `12-fib-ram` | vector in zero-page RAM `0x00` (`slli` index×4) |
 
-Capstone (WIP): `09-snake` (game loop, `WASD` at `0xFF`, apple at random).
+Capstone: `09-snake` (game loop, `WASD` at `0xFF`, apple at random,
+state in zero-page `0x00`, full 32x32 arena playable).
+Headless without input walks right into the wall and halts red at `game_over`;
+press keys in `just debug 09-snake` to steer and eat (grows `LEN`).
 
 ## Solutions
 

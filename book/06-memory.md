@@ -11,11 +11,11 @@ just debug 05-memory
 Source (`labs/05-memory/prog.s`):
 
 ```asm
-    li t0, 0x300
-    sw t1, 0(t0)      // *0x300 = 42
-    sw t1, 4(t0)      // *0x304 = 99
+    li t0, 0x00
+    sw t1, 0(t0)      // *0x00 = 42
+    sw t1, 4(t0)      // *0x004 = 99
     add t3, t0, t2
-    sw t1, 0(t3)      // *0x308 = 77 (base+offset)
+    sw t1, 0(t3)      // *0x008 = 77 (base+offset)
     lw t4, 0(t0)      // load word
     sb t1, 12(t0)     // byte store
     lbu s1, 12(t0)    // byte load unsigned
@@ -30,16 +30,16 @@ Every memory access is a `lw`/`sw` (or `lh`/`lb`/`lbu`/`sh`/`sb`) with `base + 1
 * `lb`/`lbu` — byte (sign/zero extended)
 * `sb`/`sh` — byte/halfword store
 
-Our memory is flat `0x000-0xFFF`: `0x000` code, `0x200` framebuffer, `0x300` RAM.
+Our memory is `0x000-0xFFF`: `0x000` zero-page RAM, `0x100` stack, `0x200` framebuffer, `0x600` code.
 
 ## Try It
 
-Step and watch `w_mem` hexdump at `0x300`: `42 99 77 171`. The framebuffer at `0x200` shows `13 11` (`141 & 0xF`, `0xAB & 0xF`).
+Step and watch `w_mem` hexdump at `0x00`: `42 99 77 171`. The framebuffer at `0x200` shows `13 11` (`141 & 0xF`, `0xAB & 0xF`).
 
 ## Exercises
 
-1. Replace `lw t4, 0(t0)` with `lb` vs `lbu`: load the byte `0xAB` at `0x30C` with each. How does sign-extend (`lb`) differ from zero-extend (`lbu`)? ([solution](../solutions/06-memory/ex01-lb-lbu.s))
+1. Replace `lw t4, 0(t0)` with `lb` vs `lbu`: load the byte `0xAB` at `0x00C` with each. How does sign-extend (`lb`) differ from zero-extend (`lbu`)? ([solution](../solutions/06-memory/ex01-lb-lbu.s))
 2. Use `slli t4, t2, 2` to scale an index by 4 (preview: shifting is covered in [11-alu](11-alu.md); `03-fib-ram` uses `slli t4, t2, 2`) then `add` + `sw` for word-indexed access. ([solution](../solutions/06-memory/ex02-scaled-index.s))
-3. Write a loop that copies 4 words from `0x300` to `0x200`. ([solution](../solutions/06-memory/ex03-copy-loop.s))
+3. Write a loop that copies 4 words from `0x00` to `0x200`. ([solution](../solutions/06-memory/ex03-copy-loop.s))
 
 Next: [07-stack.md](07-stack.md)

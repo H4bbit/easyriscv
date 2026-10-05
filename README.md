@@ -19,13 +19,13 @@ just clean             # remove artifacts
 
 - `01-pixel` - first framebuffer draw (sb to 0x200, 1 byte/pixel)
 - `02-fib` - Fibonacci N=7 (branching)
-- `03-fib-ram` - Fibonacci vector in RAM 0x300
+- `03-fib-ram` - Fibonacci vector in zero-page RAM 0x00
 - `04-branching` - countdown with bne
 - `05-memory` - lw/sw/sb/lbu
 - `06-stack` - manual sp push/pop
 - `07-jumping` - jal/jalr nested calls
 - `08-alu` - and/or/xor masking (random at 0xFE)
-- `09-snake` - Snake capstone (draft, infinite loop)
+- `09-snake` - Snake capstone (game loop, eat/grow, self/wall collision, game over)
 
 ## Book
 
