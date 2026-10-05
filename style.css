@@ -56,7 +56,7 @@ section pre {
   margin: 0 0 6px 0;
   padding: 6px;
   border: 1px solid black;
-  width: 420px;
+  width: 390px;
   height: 290px;
   font-family: monospace;
   overflow: auto;
@@ -68,6 +68,8 @@ section pre {
   float: right;
   image-rendering: pixelated;
   border: 1px solid black;
+  width: 160px;
+  height: 160px;
 }
 
 .debugger {
@@ -76,9 +78,10 @@ section pre {
   padding: 3px;
   padding-top: 8px;
   min-height: 125px;
-  width: 152px;
+  width: 170px;
   text-align: center;
   float: right;
+  clear: right;
   box-sizing: border-box;
 }
 
@@ -86,6 +89,34 @@ section pre {
   margin: 0;
   margin-top: 6px;
   padding: 0;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* Full RV32I register file: 8 rows x 4 (name + value), changed cells bold */
+.regfile {
+  margin: 0 auto;
+  border-collapse: collapse;
+  font-family: monospace;
+  font-size: 10px;
+  text-align: left;
+}
+
+.regfile td {
+  padding: 0 2px;
+}
+
+.regfile .rn {
+  color: #555;
+}
+
+.regfile .rv.changed, .rpc.changed {
+  font-weight: bold;
+  color: #000;
+}
+
+.rpc {
+  margin-top: 4px;
   font-family: monospace;
   font-size: 11px;
 }

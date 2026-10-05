@@ -3,35 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EasyRISC-V Terminal</title>
+<title>EasyRISC-V</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrapper">
 <header>
-<h1>EasyRISC-V Terminal</h1>
-<p>Bare-metal RV32I playground in the browser. Inspired by
+<h1>EasyRISC-V</h1>
+<p>Bare-metal RV32I programming, in your browser. Inspired by
 <a href="https://skilldrick.github.io/easy6502/">easy6502</a> by Nick Morgan
 (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
-No toolchain, no server: the assembler and CPU are <code>riscv.js</code>.</p>
+No toolchain, no server: each widget below is an assembler and CPU in
+<code>riscv.js</code>. Click <strong>Assemble</strong>, then
+<strong>Run</strong>.</p>
+<p><strong>Scope:</strong> RV32I base integer instruction set only &mdash;
+no M/A/F/D/C extensions, no privileged ISA, no CSRs.</p>
 <nav class="toc">
-<a href="#play">Playground</a> &middot;
+<a href="#intro">Intro</a> &middot;
+<a href="#numbers">Numbers</a> &middot;
+<a href="#first-pixel">First pixel</a> &middot;
+<a href="#registers">Registers</a> &middot;
+<a href="#branching">Branching</a> &middot;
+<a href="#memory">Memory</a> &middot;
+<a href="#stack">Stack</a> &middot;
+<a href="#jumping">Jumping</a> &middot;
+<a href="#io">IO</a> &middot;
+<a href="#alu">ALU</a> &middot;
+<a href="#fib-ram">Fib in RAM</a> &middot;
+<a href="#snake">Snake</a> &middot;
 <a href="#map">Memory map</a> &middot;
-<a href="#asm">Assembler notes</a>
+<a href="#asm">Assembler</a>
 </nav>
 </header>
 
-<section id="play">
-<h2>Playground</h2>
-<p>Click <strong>Assemble</strong>, then <strong>Run</strong>.
-Tick <strong>Debugger</strong> for single-stepping, <strong>Monitor</strong> for a hex view.
-Keys <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> feed the <code>0xFF</code> port (Snake).</p>
+<section id="intro">
+<h2>Introduction</h2>
+<p>In this tiny ebook you will learn bare-metal RISC-V assembly by drawing
+pixels, looping counters, and building a Snake game &mdash; all in the
+widgets embedded in each chapter. Each widget is a little RV32I assembler
+and simulator: assembly goes in the textarea, pixels come out on the
+32x32 canvas.</p>
+<p>How to use a widget: click <strong>Assemble</strong>, then
+<strong>Run</strong>. Tick <strong>Debugger</strong> and press
+<strong>Step</strong> to execute one instruction at a time while watching
+the registers. Tick <strong>Monitor</strong> to watch a slice of memory.
+<strong>Hexdump</strong> shows the assembled bytes,
+<strong>Disassemble</strong> shows what the CPU decodes,
+<strong>Notes</strong> reminds you of the memory map.</p>
+<p>Every chapter teaches two forms of each instruction: first the canonical
+RV32I instruction (what the hardware executes), then immediately its
+assembler pseudo-instruction (what the programmer writes). The disassembly
+is the proof &mdash; it shows only canonical encodings.</p>
+<h3>Lessons</h3>
+<ul>
+<li><a href="#numbers">Numbers</a> &mdash; hex and immediates
+(<code>lui</code>/<code>addi</code>, <code>li</code> pseudo-op)</li>
+<li><a href="#first-pixel">First pixel</a> &mdash; framebuffer draw
+(<code>sb</code> to <code>0x200</code>)</li>
+<li><a href="#registers">Registers</a> &mdash; the register file
+(<code>add</code>, <code>addi</code>/<code>mv</code>)</li>
+<li><a href="#branching">Branching</a> &mdash; countdown with
+<code>bne</code> (explicit compare, no flags)</li>
+<li><a href="#memory">Memory</a> &mdash;
+<code>lw</code>/<code>sw</code>/<code>sb</code>/<code>lbu</code>,
+base+offset</li>
+<li><a href="#stack">Stack</a> &mdash; manual <code>sp</code> push/pop</li>
+<li><a href="#jumping">Jumping</a> &mdash; <code>jal</code>/<code>jalr</code>
+nested calls</li>
+<li><a href="#io">IO</a> &mdash; MMIO ports (<code>0xFE</code> random,
+<code>0xFF</code> key, <code>0x1000</code> print)</li>
+<li><a href="#alu">ALU</a> &mdash; <code>and</code>/<code>or</code>/<code>xor</code>,
+shifts, <code>sub</code>/<code>slt</code></li>
+<li><a href="#fib-ram">Fib in RAM</a> &mdash; vector in zero-page RAM</li>
+<li><a href="#snake">Snake</a> &mdash; capstone game (WASD at
+<code>0xFF</code>, apple at random, full 32x32 arena)</li>
+</ul>
+</section>
 
+<section id="numbers">
+<h2>Numbers and Immediates</h2>
+<p>Before writing code, a quick note on numbers. RISC-V assemblers
+understand decimal and hex. Hex is prefixed with <code>0x</code>:</p>
+<ul>
+<li><code>42</code> decimal</li>
+<li><code>0x2A</code> hex &mdash; same value, 42</li>
+<li><code>0x200</code> hex = 512 decimal &mdash; our framebuffer base</li>
+<li><code>0xF</code> = 15 decimal &mdash; max color nibble</li>
+</ul>
+<p>If you are not familiar with hex, read the
+<a href="https://en.wikipedia.org/wiki/Hexadecimal">Wikipedia article</a>.
+Hex digits are <code>0-9 A-F</code>. Each digit is 4 bits, each byte is two
+digits (<code>0x00</code>-<code>0xFF</code>), each word is eight digits.</p>
+<h3>Immediates vs Memory</h3>
+<p>In <code>li t0, 5</code>, the <code>5</code> is an immediate &mdash; a
+value encoded directly in the instruction. In <code>sw t0, 0(t1)</code>,
+the <code>0</code> is an offset added to the base register
+<code>t1</code>.</p>
+<p><code>li</code> is a pseudo-instruction. For small values
+(<code>-2048</code> to <code>2047</code>) it is just one instruction:
+<code>addi t0, zero, imm</code>. Larger values need two:
+<code>lui t0, hi</code> + <code>addi t0, t0, lo</code>. You will see both
+forms in the disassembly from the next chapter on.</p>
+<h3>Words</h3>
+<p>All RISC-V registers are 32 bits (4 bytes). <code>pc</code> advances by 4.
+Our memory is words at <code>0x000, 0x004, 0x008...</code> but we can still
+store single bytes with <code>sb</code>.</p>
+<h3>Exercises</h3>
+<ol>
+<li>What is <code>0x10</code> in decimal? <code>0xFF</code>?</li>
+<li>In the widget below, change <code>li t0, 5</code> to
+<code>li t0, 0x1234</code>, Assemble, then Disassemble &mdash; how many
+instructions did one <code>li</code> become?</li>
+<li>What happens if you store a word at an unaligned address? (Hint:
+<code>lw</code> requires alignment.)</li>
+</ol>
+</section>
+
+<section id="first-pixel">
+<h2>Our First Program</h2>
+<p>Let&rsquo;s dive in! Assemble and Run the snippet below, then tick
+<strong>Debugger</strong> and step through it.</p>
 <div class="widget">
-  <div class="labPicker">
-    <label for="labSelect">Lab:</label>
-    <select class="labSelect" id="labSelect"></select>
-  </div>
   <div class="buttons">
     <input type="button" value="Assemble" class="assembleButton" />
     <input type="button" value="Run" class="runButton" />
@@ -40,7 +132,6 @@ Keys <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> feed the <code>0xFF</code>
     <input type="button" value="Disassemble" class="disassembleButton" />
     <input type="button" value="Notes" class="notesButton" />
   </div>
-
   <textarea class="code" spellcheck="false">// First program - load immediates and store bytes to the framebuffer
 // Draws 3 pixels on the 32x32 framebuffer at 0x200 (1 byte/pixel)
 // Step 1 is canonical (addi/jal), step 2 is the shorthand (li/j).
@@ -55,32 +146,26 @@ _start:
     li t0, 8          // shorthand for addi t0, zero, 8: orange
     sb t0, 2(t1)      // pixel (2,0)
     jal x0, .         // halt: jump to self (j . is shorthand)</textarea>
-
   <canvas class="screen" width="160" height="160"></canvas>
-
   <div class="debugger">
     <input type="checkbox" class="debug" name="debug" />
-    <label for="debug">Debugger</label>
+    <label>Debugger</label>
     <div class="minidebugger"></div>
     <div class="buttons">
       <input type="button" value="Step" class="stepButton" />
       <input type="button" value="Jump to..." class="gotoButton" />
     </div>
   </div>
-
   <div class="monitorControls">
-    <label for="monitoring">Monitor</label>
+    <label>Monitor</label>
     <input type="checkbox" class="monitoring" name="monitoring" />
-
-    <label for="start">Start: $</label>
+    <label>Start: $</label>
     <input type="text" value="0" class="start" name="start" />
-    <label for="length">Length: $</label>
+    <label>Length: $</label>
     <input type="text" value="ff" class="length" name="length" />
   </div>
-
   <div class="monitor"><pre><code></code></pre></div>
   <div class="messages"><pre><code></code></pre></div>
-
   <div class="notes" style="display: none">Notes:
 
 Address 0xFE reads a new random byte on every load (lbu + andi mask).
@@ -97,8 +182,1321 @@ Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
 lessons never use them. jal/jalr never touch the stack: ra is just
 a register, unlike 6502 JSR/RTS which push the PC in hardware.
-    </div>
+  </div>
 </div>
+<p><code>addi t0, zero, 1</code> adds <code>1</code> to the always-zero
+register &mdash; that is how a constant enters a register (canonical form).
+<code>li t0, 5</code> is the assembler&rsquo;s shorthand for the same shape
+(<code>addi t0, zero, 5</code>); <strong>Disassemble</strong> shows both
+forms as <code>addi</code>. <code>jal x0, .</code> jumps to itself:
+<code>pc</code> never moves, so the CPU halts (<code>j .</code> is the
+shorthand).</p>
+<p>You should see three colored pixels at the top-left of the canvas.</p>
+<h3>Stepping Through</h3>
+<p>Reset, tick <strong>Debugger</strong>, and Step while watching the
+registers:</p>
+<ol>
+<li><code>addi t0, zero, 1</code> &mdash; loads <code>1</code> into
+<code>t0</code>. RISC-V has 32 32-bit registers; adding to
+<code>zero</code> is the canonical way to load a small constant.</li>
+<li><code>addi t1, zero, 0x200</code> &mdash; <code>t1 = 0x200</code>.</li>
+<li><code>sb t0, 0(t1)</code> &mdash; stores the low byte of
+<code>t0</code> at <code>t1+0</code> (<code>0x200</code>). Rows are 32 bytes
+wide: <code>0x200-0x21F</code> is row 0, next row starts at
+<code>0x220</code>. Only the low 4 bits are the color.</li>
+</ol>
+<p>Then the same idea in shorthand: <code>li t0, 5</code> /
+<code>li t0, 8</code> (each is <code>addi</code> from <code>zero</code>).
+<code>pc</code> starts at <code>0x600</code> and advances by 4 per
+instruction.</p>
+<h3>Why This Matters</h3>
+<p>On real hardware video is more complex, but the idea is the same:
+memory-mapped I/O. Writing to <code>0x200</code> is not plain RAM &mdash;
+the display interprets it as a pixel. Plain RAM is the zero page at
+<code>0x00</code> (used in later chapters).</p>
+<h3>Exercises</h3>
+<ol>
+<li>Change the color of the three pixels. Try <code>li t0, 2</code> (red)
+or <code>li t0, 0xE</code> (light blue).
+(<a href="solutions/01-pixel/ex01-change-color.s">solution</a>)</li>
+<li>Move one pixel to the bottom-right corner. Hint: offset
+<code>1023</code> is the last pixel (<code>31,31</code>).
+(<a href="solutions/01-pixel/ex02-bottom-right.s">solution</a>)</li>
+<li>Add instructions to draw a diagonal: <code>sb</code> at offsets
+<code>0</code>, <code>33</code>, <code>66</code>... (32 bytes per row, +33 =
+down+right).
+(<a href="solutions/01-pixel/ex03-diagonal.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="registers">
+<h2>Registers</h2>
+<p>You have seen <code>t0</code> and <code>pc</code> change. What do they
+mean? The debugger panel shows the register file:</p>
+<ul>
+<li><code>zero (x0)</code> &mdash; always 0. Use it to compare against zero
+(<code>beq rs, zero, label</code>) or as source for <code>li</code>.</li>
+<li><code>ra (x1)</code> &mdash; return address for <code>jal</code>.</li>
+<li><code>sp (x2)</code> &mdash; stack pointer. You set it yourself
+(<code>li sp, 0x1FC</code>).</li>
+<li><code>t0-t6</code> &mdash; temporaries, scratch values.</li>
+<li><code>s0-s11</code> &mdash; saved registers (<code>s0</code> is also
+<code>fp</code>).</li>
+<li><code>a0-a7</code> &mdash; arguments and return value.</li>
+</ul>
+<p>There is no flags register. Branches do the compare directly (see
+<a href="#branching">Branching</a>). A full list of the RV32I instruction
+set is in the
+<a href="https://docs.riscv.org/reference/isa/unpriv/unpriv-index.html">RISC-V ISA Manual, Volume I: Unprivileged</a>,
+the
+<a href="https://github.com/riscv-non-isa/riscv-asm-manual">RISC-V Assembly Programmer&rsquo;s Manual</a>,
+and the
+<a href="https://dejazzer.com/coen2710/lectures/RISC-V-Reference-Data-Green-Card.pdf">RISC-V Green Card</a>.
+Keep them open beside the debugger &mdash; they are your bible.</p>
+<p>This program computes Fibonacci(7) = 13 &mdash; canonical copies first,
+shorthand after. Assemble it, tick <strong>Debugger</strong>, and watch
+<code>t0/t1/t2/a0</code> and <code>pc</code>:</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">.section .text
+.globl _start
+_start:
+    li a0, 7          // N = 7 (compute 7th Fibonacci number)
+    li t0, 0          // F(0) = 0
+    beq a0, zero, done
+    li t1, 1          // F(1) = 1
+    li t2, 1          // counter = 1
+    beq a0, t2, ready
+loop:
+    add t3, t0, t1    // t3 = F(n-1) + F(n-2)
+    addi t0, t1, 0    // canonical: t0 = t1 (see mv below)
+    addi t1, t3, 0    // canonical: t1 = t3
+    addi t2, t2, 1    // counter++
+    blt  t2, a0, loop
+ready:
+    addi a0, t1, 0    // canonical: a0 = result (13 for N=7)
+done:
+    jal x0, done</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p><code>addi rd, rs, 0</code> copies <code>rs</code> to <code>rd</code>
+&mdash; that is the whole trick behind the shorthand <code>mv rd, rs</code>
+(<strong>Disassemble</strong> shows both as <code>addi</code>).
+(<code>blt</code> is a preview: branches are covered in
+<a href="#branching">the next chapter</a>.)</p>
+<h3>Exercises</h3>
+<ol>
+<li>Rewrite the loop copies with <code>mv</code> (<code>mv t0, t1</code> for
+<code>addi t0, t1, 0</code>) and confirm the result is unchanged.
+(<a href="solutions/04-registers/ex01-addi-move.s">solution</a>)</li>
+<li>What happens if you write to <code>zero</code>? Try
+<code>addi zero, t0, 0</code> then <code>addi a0, zero, 0</code>.
+(<a href="solutions/04-registers/ex02-write-zero.s">solution</a>)</li>
+<li>Compare <code>sp</code> after <a href="#stack">the Stack chapter</a>:
+run it and check the final pixel (which holds <code>sp &amp; 0xF</code>).</li>
+</ol>
+</section>
+
+<section id="branching">
+<h2>Branching</h2>
+<p>So far we have run straight-line code. Now let&rsquo;s make it loop.
+<code>bne t0, t2, loop</code> means
+<code>if (t0 != t2) pc = loop</code>. No separate compare instruction is
+needed &mdash; the branch does the compare itself. Other forms:
+<code>beq</code> (equal), <code>blt</code> (signed less), <code>bge</code>,
+<code>bltu</code> (unsigned), <code>bgeu</code>. Pseudo
+<code>beqz rs, label</code> is <code>beq rs, zero, label</code>.</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// Branching - counted loop with explicit compare branches
+// Counts down from 8 to 3, writing pixel color at 0x200 each iteration
+// Demonstrates beq/bne with no flags register (explicit compare)
+
+.section .text
+.globl _start
+_start:
+    li t0, 8          // counter = 8 (like LDX #$08)
+    li t1, 0x200      // framebuffer base
+    li t2, 3          // target = 3 (like CPX #$03)
+
+loop:
+    addi t0, t0, -1       // DEX
+    sb   t0, 0(t1)        // write color at 0x200 - 1 byte/pixel
+    bne  t0, t2, loop     // branch if !=
+
+    // store final value at next pixel to observe halt
+    sb   t0, 1(t1)
+    j    .                // halt
+
+// Exercises:
+// 1. Change BNE to BEQ and observe infinite loop vs immediate halt
+// 2. Use BLT/BGE to branch on signed less-than (e.g., blt t0, t2, loop)
+// 3. Try BLTU for unsigned compare</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p>Step through it: <code>t0</code> goes <code>8&rarr;7&rarr;6&rarr;5&rarr;4&rarr;3</code>
+then falls through. The first two canvas pixels show the low 4 bits of the
+last stores.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Replace <code>bne</code> with <code>beq</code>. What happens?
+(<a href="solutions/05-branching/ex01-beq.s">solution</a>)</li>
+<li>Use <code>blt t0, t2, loop</code> &mdash; how does signed less-than
+differ? (<a href="solutions/05-branching/ex02-blt.s">solution</a>)</li>
+<li>Write a loop that counts up from <code>0</code> to <code>5</code> using
+<code>addi</code> and <code>bne</code>.
+(<a href="solutions/05-branching/ex03-count-up.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="memory">
+<h2>Memory</h2>
+<p>RISC-V uses a simple load/store model. Every memory access is a
+<code>lw</code>/<code>sw</code> (or <code>lh</code>/<code>lb</code>/<code>lbu</code>/<code>sh</code>/<code>sb</code>)
+with <code>base + 12-bit immediate</code>: <code>0(t0)</code> or
+<code>4(t0)</code>. For indexing, compute the address first:
+<code>add t3, t0, t2; sw t1, 0(t3)</code>.</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// Memory - RISC-V load/store with base+offset addressing
+// Demonstrates lw/sw, offsets, and base+offset (only modes in RISC-V)
+// Framebuffer at 0x200 is just memory-mapped I/O in the 4KB address space
+
+.section .text
+.globl _start
+_start:
+    li t0, 0x000      // zero-page RAM base (like 6502 zero page)
+    li t1, 42
+    sw t1, 0(t0)      // absolute: sw t1, 0(t0)  -&gt; *0x000 = 42
+    li t1, 99
+    sw t1, 4(t0)      // absolute+4: sw t1, 4(t0) -&gt; *0x004 = 99
+
+    // indexed via register
+    li t2, 8          // offset = 8
+    li t1, 77
+    add t3, t0, t2    // t3 = base + offset
+    sw t1, 0(t3)      // store at 0x008
+
+    // load back and copy to framebuffer
+    lw t4, 0(t0)      // t4 = *0x000 (42)
+    lw t5, 4(t0)      // t5 = *0x004 (99)
+    add t4, t4, t5    // t4 = 141
+    li s0, 0x200      // FB base (keep separate reg)
+    sb t4, 0(s0)      // FB[0] = 141 &amp; 0xF = 13 (light green) - 1 byte/pixel
+
+    // byte store/load
+    li t1, 0xAB
+    sb t1, 12(t0)     // byte at 0x00C
+    lbu s1, 12(t0)    // load byte unsigned -&gt; s1=171
+    sb s1, 1(s0)      // FB[1] = 171 &amp; 0xF = 11 (dark grey)
+
+    j .
+
+// Exercises:
+// 1. Try lh/lhu vs lw - what happens with alignment?
+// 2. Use slli to compute index*4 (like fib-ram) for array access
+// 3. Copy 0x000 vector to framebuffer 0x200 in a loop</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p>Step and tick <strong>Monitor</strong> (start <code>0</code>, length
+<code>ff</code>): RAM at <code>0x00</code> shows
+<code>42 99 77 171</code>. The canvas shows <code>13 11</code>
+(<code>141 &amp; 0xF</code>, <code>0xAB &amp; 0xF</code>). Our memory is
+<code>0x000-0xFFF</code>: <code>0x000</code> zero-page RAM,
+<code>0x100</code> stack, <code>0x200</code> framebuffer,
+<code>0x600</code> code.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Replace <code>lbu</code> with <code>lb</code> on the byte
+<code>0xAB</code>: how does sign-extend (<code>lb</code>) differ from
+zero-extend (<code>lbu</code>)?
+(<a href="solutions/06-memory/ex01-lb-lbu.s">solution</a>)</li>
+<li>Use <code>slli t4, t2, 2</code> to scale an index by 4 (preview:
+shifting is covered in <a href="#alu">ALU</a>) then <code>add</code> +
+<code>sw</code> for word-indexed access.
+(<a href="solutions/06-memory/ex02-scaled-index.s">solution</a>)</li>
+<li>Write a loop that copies 4 words from <code>0x00</code> to
+<code>0x200</code>.
+(<a href="solutions/06-memory/ex03-copy-loop.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="stack">
+<h2>The Stack</h2>
+<p>The stack pointer <code>sp</code> (<code>x2</code>) is just another
+register &mdash; you manage it. Push is
+<code>addi sp, sp, -4; sw</code>, pop is <code>lw; addi sp, sp, 4</code>.
+The stack grows down from <code>0x1FC</code> (code lives far above at
+<code>0x600</code>).</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// Stack - manual push/pop via sp
+// Demonstrates push/pop via sp (software convention, grows down)
+// Stack grows down from 0x1FC (top of safe RAM, MEM_SIZE=0x1000)
+
+.section .text
+.globl _start
+_start:
+    li sp, 0x1FC       // init stack pointer (like SP=$FF -&gt; $01FF)
+
+    // push 3 values (PHA equivalent)
+    li t0, 11
+    addi sp, sp, -4
+    sw t0, 0(sp)       // push 11
+
+    li t0, 22
+    addi sp, sp, -4
+    sw t0, 0(sp)       // push 22
+
+    li t0, 33
+    addi sp, sp, -4
+    sw t0, 0(sp)       // push 33 (top)
+
+    // pop in reverse and write to framebuffer at 0x200 (1 byte/pixel)
+    li t1, 0x200
+    lw t0, 0(sp)       // pop 33
+    addi sp, sp, 4
+    sb t0, 0(t1)
+
+    lw t0, 0(sp)       // pop 22
+    addi sp, sp, 4
+    sb t0, 1(t1)
+
+    lw t0, 0(sp)       // pop 11
+    addi sp, sp, 4
+    sb t0, 2(t1)
+
+    // Stack should be back at 0x1FC
+    // Write sp low nibble to FB[3] for visual check
+    andi t0, sp, 0xF
+    sb t0, 3(t1)
+
+    j .
+
+// Exercises:
+// 1. What happens if you forget addi sp,sp,4 after lw? (stack leak)
+// 2. Try pushing 8 values and popping - draw a mirrored pattern (push loop then pop loop)
+// 3. Use sp to save ra before a jal (preview of next lab)</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p>Pops come out in LIFO order: <code>33</code>, <code>22</code>,
+<code>11</code> &mdash; masked to low nibbles on the canvas. The last pixel
+is <code>sp &amp; 0xF</code> (<code>0x1FC</code> restored, so
+<code>12</code>). Step and watch <code>sp</code> decrement then restore.
+Forget <code>addi sp, sp, 4</code> after <code>lw</code> and watch the
+leak.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Push 8 colors and pop to draw a mirrored pattern (first loop pushes,
+second loop pops and draws).
+(<a href="solutions/07-stack/ex01-mirror.s">solution</a>)</li>
+<li>What if you <code>sw</code> to <code>0x1000</code>? That address is
+outside the 4KB memory &mdash; the VM intercepts it as a print-char port
+instead of RAM (preview: ports are covered in <a href="#io">IO</a>).
+(<a href="solutions/07-stack/ex02-mmio-print.s">solution</a>)</li>
+<li>Save/restore <code>s0</code> on the stack around a function call
+(preview of next chapter).
+(<a href="solutions/07-stack/ex03-save-s0.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="jumping">
+<h2>Jumping</h2>
+<p>RISC-V has two jump forms: <code>jal</code> and <code>jalr</code>.</p>
+<ul>
+<li><code>jal rd, label</code> &mdash; <code>rd = pc+4; pc = label</code>.
+<code>jal ra, func</code> calls a function, <code>jal x0, label</code> is an
+unconditional jump (<code>j</code>), <code>jal x0, 0</code> is an infinite
+loop halt.</li>
+<li><code>jalr rd, offset(rs1)</code> &mdash;
+<code>rd = pc+4; pc = rs1+offset &amp; ~1</code>.
+<code>jalr zero, 0(ra)</code> returns (<code>ret</code> pseudo).</li>
+</ul>
+<p>Unlike 6502 <code>JSR</code>/<code>RTS</code> &mdash; which push and pop
+the PC in hardware &mdash; <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. For nested calls, save
+<code>ra</code> on the stack yourself, or the inner call overwrites it and
+the outer function can never return:</p>
+<pre>outer:
+    addi sp, sp, -4
+    sw ra, 0(sp)
+    jal ra, inner
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    ret</pre>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// Jumping - jal/jalr subroutine calls and unconditional jumps
+// Demonstrates jal (call/jump) and jalr/ret (return)
+
+.section .text
+.globl _start
+_start:
+    li t0, 0
+    jal ra, inc_one   // JSR inc_one
+    // t0 should be 1 here
+    li t1, 0x200
+    sb t0, 0(t1)       // FB[0] = 1 (1 byte/pixel)
+
+    j after           // JMP (jal x0)
+    li t0, 99         // skipped
+after:
+    addi t0, t0, 4    // t0 = 5
+    sb t0, 1(t1)      // FB[1] = 5
+
+    // nested call test: save ra on stack
+    li sp, 0x1FC
+    jal ra, outer
+    sb t0, 2(t1)      // FB[2] should be 15
+    j .
+
+inc_one:
+    addi t0, t0, 1
+    jalr zero, 0(ra)  // RTS
+
+outer:
+    addi sp, sp, -4
+    sw ra, 0(sp)
+    addi t0, t0, 1    // t0 5-&gt;6
+    jal ra, inner
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    jalr zero, 0(ra)
+
+inner:
+    addi t0, t0, 9    // t0 6-&gt;15
+    jalr zero, 0(ra)
+
+// Expected FB: 1, 5, 15</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p>This goes <code>0&rarr;1&rarr;5&rarr;15</code> with nested
+<code>outer</code>/<code>inner</code>. Watch <code>ra</code> and
+<code>sp</code> as you step into <code>jal</code>. The canvas shows
+<code>1 5 15</code>.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Remove the <code>sw ra</code>/<code>lw ra</code> in
+<code>outer</code>. What does the last pixel become?
+(<a href="solutions/08-jumping/ex01-no-save-ra.s">solution</a>)</li>
+<li>Replace <code>j after</code> with
+<code>beq zero, zero, after</code> &mdash; does it still jump?
+(<a href="solutions/08-jumping/ex02-beq-jump.s">solution</a>)</li>
+<li>Write a leaf function that doesn&rsquo;t save <code>ra</code> and a
+non-leaf that must.
+(<a href="solutions/08-jumping/ex03-leaf-nonleaf.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="io">
+<h2>IO</h2>
+<p>So far every program was closed: same input, same output. Now meet the
+VM&rsquo;s outside world &mdash; three memory-mapped ports. Everything is a
+load or a store: no syscalls, bare metal like the framebuffer.</p>
+<table>
+<tr><th>Address</th><th>Name</th><th>Dir</th><th>Meaning</th></tr>
+<tr><td><code>0xFE</code></td><td>random</td><td>read</td><td>new random byte on every instruction</td></tr>
+<tr><td><code>0xFF</code></td><td>last key</td><td>read</td><td>ASCII of last key pressed (<code>0</code> if none)</td></tr>
+<tr><td><code>0x1000</code></td><td>print-char</td><td>write</td><td>low byte of stored word goes to the messages box</td></tr>
+</table>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// IO - the VM's outside world: memory-mapped ports
+// 0xFE: random byte (new value every instruction)
+// 0xFF: ASCII of last key pressed (0 headless, set by UI in debug)
+// 0x1000: print-char port (store a byte -&gt; stdout)
+// Everything is a store or load: no syscalls, bare metal like the framebuffer.
+
+.section .text
+.globl _start
+_start:
+    // 1. random byte -&gt; low nibble -&gt; framebuffer
+    li t0, 0xFE
+    lbu t1, 0(t0)      // random 0-255
+    andi t1, t1, 0x0F  // 0-15
+    li t2, 0x200
+    sb t1, 0(t2)       // FB[0] = random color
+
+    // 2. print 'O' 'K' via stores to 0x1000
+    li t0, 0x1000
+    li t1, 79          // 'O'
+    sw t1, 0(t0)
+    li t1, 75          // 'K'
+    sw t1, 0(t0)
+
+    j .
+
+// Exercises:
+// 1. Print "HI" instead: change the two characters (72='H', 73='I')
+// 2. Print digit '5' (53) via a 0x1000 store
+// 3. Echo the last key: load 0xFF, mask the low nibble, store to FB[1]
+//    (press a key anywhere on the page and watch the pixel change)</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<p><code>0xFE</code> is how games roll dice: mask it down
+(<code>andi t1, t1, 0x0F</code> for <code>0-15</code>). Run twice and the
+first pixel differs. <code>0xFF</code> is how games read input: compare
+against <code>0x77</code> (<code>w</code>), <code>0x64</code>
+(<code>d</code>), <code>0x73</code> (<code>s</code>), <code>0x61</code>
+(<code>a</code>) &mdash; press a key anywhere on the page and the widget
+sees it. <code>0x1000</code> prints: this program writes <code>OK</code> to
+the messages box. The mechanism is the same as the framebuffer &mdash; an
+address with a side effect &mdash; only the device differs.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Print <code>"HI"</code> instead: change the two characters
+(<code>72='H'</code>, <code>73='I'</code>).
+(<a href="solutions/10-io/ex01-hi.s">solution</a>)</li>
+<li>Print digit <code>'5'</code> (<code>53</code>) via a
+<code>0x1000</code> store.
+(<a href="solutions/10-io/ex02-digit.s">solution</a>)</li>
+<li>Echo the last key: load <code>0xFF</code>, mask the low nibble, store
+to the second pixel. (Press a key and watch the pixel change.)
+(<a href="solutions/10-io/ex03-echo-key.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="alu">
+<h2>ALU</h2>
+<p>RISC-V arithmetic is three-operand with no flags: the result goes to a
+register, and the next instruction decides what to do with it. This chapter
+tours the whole integer ALU &mdash; logic, shifts, compare &mdash; using the
+canvas as a truth table. It assumes you can dice and mask
+(see <a href="#io">IO</a>).</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// ALU - AND/OR/XOR bitwise ops and immediate masking
+// Demonstrates andi/ori/xori and bit masking (e.g. AND #0x03 style masks)
+
+.section .text
+.globl _start
+_start:
+    // load random byte from 0xFE (sysRandom)
+    li t0, 0xFE
+    lbu t1, 0(t0)      // t1 = random 0-255
+    andi t1, t1, 0x03  // mask low 2 bits -&gt; 0-3
+    addi t1, t1, 2     // 2-5 (like apple Y 2-5)
+    // write result to framebuffer
+    li t2, 0x200
+    sb t1, 0(t2)       // FB[0] = 2-5
+
+    // OR example: combine nibbles
+    li t3, 0x0A        // 00001010
+    li t4, 0x05        // 00000101
+    or t5, t3, t4      // 00001111 = 15
+    sb t5, 1(t2)       // FB[1] = 15
+
+    // XOR toggle
+    li t6, 0xFF
+    xori t6, t6, 0x0F  // 0xF0 -&gt; low nibble 0
+    sb t6, 2(t2)       // FB[2] = 0
+
+    j .
+
+// Exercises:
+// 1. Change mask 0x03 to 0x07 -&gt; range 0-7
+// 2. Use slli/srli to extract high nibble (&gt;&gt;4)
+// 3. Combine random X in 0xFE and Y masked to make pixel coord</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<h3>Logic: AND / OR / XOR</h3>
+<p>Each bit is computed independently:</p>
+<ul>
+<li><code>and</code> &mdash; <code>1</code> where both are
+<code>1</code>. Used as a <strong>mask</strong>:
+<code>andi t1, t1, 0x03</code> keeps only the low 2 bits, turning
+<code>0-255</code> into <code>0-3</code>.</li>
+<li><code>or</code> &mdash; <code>1</code> where either is
+<code>1</code>. Used to <strong>combine</strong>:
+<code>0x0A | 0x05 = 0x0F</code> (15).</li>
+<li><code>xor</code> &mdash; <code>1</code> where they differ. Used to
+<strong>toggle</strong>: <code>xori t6, t6, 0x0F</code> flips the low
+nibble (<code>0xFF</code> becomes <code>0xF0</code>, low nibble
+<code>0</code>).</li>
+</ul>
+<p>Register-register (<code>and</code>/<code>or</code>/<code>xor</code>) and
+immediate (<code>andi</code>/<code>ori</code>/<code>xori</code>) forms both
+exist.</p>
+<h3>Shifts and compare</h3>
+<ul>
+<li><code>slli t4, t2, 2</code> &mdash; shift left by 2 = &times;4. This is
+how the next chapter scales an index to words, and how Snake computes
+<code>y*32</code> (<code>slli t3, t3, 5</code>). Right shifts:
+<code>srli</code> (zeros in) vs <code>srai</code> (sign bit in).</li>
+<li><code>slt t5, t3, t4</code> &mdash; <code>1</code> if
+<code>t3 &lt; t4</code> (signed), else <code>0</code>. Branches like
+<code>blt</code> do this compare internally; <code>slt</code> keeps the
+<code>0/1</code> in a register instead. <code>sub</code> is the matching
+counterpart of <code>add</code>.</li>
+</ul>
+<h3>Exercises</h3>
+<ol>
+<li>Change the mask <code>0x03</code> to <code>0x07</code>: what range lands
+in the first pixel?
+(<a href="solutions/11-alu/ex01-mask7.s">solution</a>)</li>
+<li>Extract the high nibble of a random byte: <code>srli</code> right by 4.
+(<a href="solutions/11-alu/ex02-high-nibble.s">solution</a>)</li>
+<li><code>sub</code> + <code>slt</code> by hand: <code>t3=10, t4=3</code>
+&mdash; compute <code>t3-t4</code> and <code>slt</code> both directions.
+(<a href="solutions/11-alu/ex03-sub-slt.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="fib-ram">
+<h2>Fibonacci in RAM</h2>
+<p>The <a href="#registers">Registers</a> program computed Fibonacci(7) =
+13 but kept only the last two values. What if you need the whole sequence?
+Store it &mdash; this chapter turns registers into a vector, the pattern
+every array program reuses.</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">.section .text
+.globl _start
+_start:
+    li a0, 7
+    li s0, 0x000      // zero-page RAM base (code lives at 0x600, far away)
+    li t0, 0
+    sw t0, 0(s0)      // RAM[0x00] = 0
+    beq a0, zero, done
+    li t1, 1
+    sw t1, 4(s0)      // RAM[0x004] = 1
+    li t2, 1
+    beq a0, t2, ready
+loop:
+    add t3, t0, t1
+    mv  t0, t1
+    mv  t1, t3
+    addi t2, t2, 1
+    slli t4, t2, 2
+    add  t5, s0, t4
+    sw   t3, 0(t5)    // RAM[s0 + t2*4] = t3
+    blt  t2, a0, loop
+ready:
+    mv a0, t1
+done:
+    j done</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<h3>Base + index&times;4</h3>
+<p>Word arrays need scaling: element <code>i</code> lives at
+<code>base + i*4</code>. Three instructions do it &mdash; shift, add,
+store:</p>
+<ol>
+<li><code>slli t4, t2, 2</code> &mdash; <code>i &times; 4</code>
+(&lt;&lt; 2 is the &times;4 you met in <a href="#alu">ALU</a>)</li>
+<li><code>add t5, s0, t4</code> &mdash; address = base + offset</li>
+<li><code>sw t3, 0(t5)</code> &mdash; store the word</li>
+</ol>
+<p>Tick <strong>Monitor</strong> (start <code>0</code>) and Run: RAM shows
+<code>0 1 1 2 3 5 8 13</code>. Each loop iteration appends one word. Final
+<code>a0=13</code>, same value as before &mdash; the storage is new.</p>
+<h3>Exercises</h3>
+<ol>
+<li>Change <code>N</code> to <code>10</code>: what is the last vector word?
+(<a href="solutions/12-fib-ram/ex01-n10.s">solution</a>)</li>
+<li>Store bytes instead: <code>sb</code> the low byte of each term &mdash;
+what does the vector look like?
+(<a href="solutions/12-fib-ram/ex02-bytes.s">solution</a>)</li>
+<li>Sum the vector back: loop <code>i=0..7</code>, <code>lw</code> each
+word, accumulate in <code>a1</code>.
+(<a href="solutions/12-fib-ram/ex03-sum.s">solution</a>)</li>
+</ol>
+</section>
+
+<section id="snake">
+<h2>Creating a game</h2>
+<p>The widget below contains the entire source code of a Snake game. It
+reuses every pattern in this book: game loop, <code>0xFF</code> input,
+<code>0xFE</code> dice, framebuffer drawing. <strong>Assemble</strong>,
+<strong>Run</strong>, then steer with <kbd>W</kbd> <kbd>A</kbd>
+<kbd>S</kbd> <kbd>D</kbd> (click the page once so keys reach the
+widget).</p>
+<div class="widget">
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false">// Snake - Capstone game like easy6502 snake (bare-metal RISC-V)
+// Framebuffer 0x200 (32x32, 1 byte/pixel), random at 0xFE, key at 0xFF (WASD)
+// Game state in zero-page RAM at 0x00 (like the reference: code lives at
+// 0x600 above the screen, state below it, full 32x32 arena is playable).
+// Layout: 0x00 DIR, 0x04 LEN (segment count), 0x08 APPLE (pixel addr),
+//         0x0C seg[0]=head, 0x10 seg[1], ... (one word per segment).
+// Directions use one bit each (like the reference): 1=up 2=right 4=down 8=left.
+// Opposite pairs share one AND test: up|down, right|left.
+
+.equ FB,    0x200
+.equ RAND,   0xFE
+.equ KEY,    0xFF
+.equ STATE,  0x00
+.equ DIR,    0x0
+.equ LEN,    0x4
+.equ APPLE,  0x8
+.equ SEGS,   0xC
+
+.equ UP,     1
+.equ RIGHT,  2
+.equ DOWN,   4
+.equ LEFT,   8
+
+.section .text
+.globl _start
+_start:
+    li sp, 0x1FC      // stack top (grows down, code is far above at 0x600)
+    jal ra, init
+    jal ra, loop
+    j .               // loop never returns; halt if it ever does
+
+// init + loop subroutines (reference calls jsr init / jsr loop)
+init:
+    addi sp, sp, -4   // non-leaf: save ra before nested calls (see 07-jumping)
+    sw ra, 0(sp)
+    jal ra, init_snake
+    jal ra, gen_apple
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+init_snake:
+    li t0, STATE
+    li t1, RIGHT
+    sw t1, DIR(t0)    // start moving right
+    li t1, 2
+    sw t1, LEN(t0)    // 2 segments: head + 1 body
+    li t1, 0x411
+    sw t1, SEGS(t0)   // head = (17,16), middle of screen
+    li t1, 0x410
+    li t2, SEGS+4
+    add t2, t2, t0
+    sw t1, 0(t2)      // body = (16,16)
+    ret
+
+gen_apple:
+    li t0, RAND
+    lbu t1, 0(t0)     // random byte -&gt; X 0-31
+    andi t1, t1, 0x1F
+    lbu t2, 0(t0)     // another random byte (0xFE changes every step)
+    andi t2, t2, 0x1F // Y 0-31 (whole screen: code is at 0x600, out of the way)
+    slli t2, t2, 5    // Y*32
+    add t1, t1, t2    // Y*32+X
+    li t2, FB
+    add t1, t1, t2    // pixel address 0x200-0x5FF
+    li t0, STATE
+    sw t1, APPLE(t0)
+    ret
+
+// main game loop: input, update state, render (reference: readKeys,
+// checkCollision, updateSnake, drawApple, drawSnake, spinWheels)
+loop:
+    jal ra, read_keys
+    jal ra, check_collision
+    jal ra, update_snake
+    jal ra, draw_apple
+    jal ra, draw_snake
+    li t0, 400
+spin:
+    addi t0, t0, -1
+    bne t0, zero, spin
+    j loop
+
+read_keys:
+    li t0, KEY
+    lbu t1, 0(t0)     // ASCII of last key (0 if none)
+    li t2, 0x77       // 'w'
+    beq t1, t2, key_up
+    li t2, 0x64       // 'd'
+    beq t1, t2, key_right
+    li t2, 0x73       // 's'
+    beq t1, t2, key_down
+    li t2, 0x61       // 'a'
+    beq t1, t2, key_left
+    ret
+key_up:
+    li t0, STATE
+    lw t1, DIR(t0)
+    andi t2, t1, DOWN // moving down? (opposite of up: reject reversal)
+    bne t2, zero, illegal
+    li t1, UP
+    sw t1, DIR(t0)
+    ret
+key_right:
+    li t0, STATE
+    lw t1, DIR(t0)
+    andi t2, t1, LEFT
+    bne t2, zero, illegal
+    li t1, RIGHT
+    sw t1, DIR(t0)
+    ret
+key_down:
+    li t0, STATE
+    lw t1, DIR(t0)
+    andi t2, t1, UP
+    bne t2, zero, illegal
+    li t1, DOWN
+    sw t1, DIR(t0)
+    ret
+key_left:
+    li t0, STATE
+    lw t1, DIR(t0)
+    andi t2, t1, RIGHT
+    bne t2, zero, illegal
+    li t1, LEFT
+    sw t1, DIR(t0)
+    ret
+illegal:
+    ret
+
+check_collision:
+    addi sp, sp, -4   // non-leaf: check_apple calls gen_apple
+    sw ra, 0(sp)
+    jal ra, check_apple
+    jal ra, check_snake
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+check_apple:
+    addi sp, sp, -4
+    sw ra, 0(sp)
+    li t0, STATE
+    lw t1, APPLE(t0)
+    lw t2, SEGS(t0)   // head address
+    bne t1, t2, no_apple
+    lw t1, LEN(t0)    // eat apple: grow one segment...
+    addi t1, t1, 1
+    sw t1, LEN(t0)
+    jal ra, gen_apple // ...and place a new apple
+no_apple:
+    lw ra, 0(sp)
+    addi sp, sp, 4
+    ret
+
+check_snake:
+    li t0, STATE
+    lw t1, SEGS(t0)   // head address
+    lw t2, LEN(t0)    // segment count
+    li t3, 1          // i = 1 (skip head)
+cs_loop:
+    bge t3, t2, no_snake
+    slli t4, t3, 2
+    add t4, t4, t0    // STATE + i*4
+    li t5, SEGS
+    add t4, t4, t5
+    lw t4, 0(t4)      // seg[i]
+    bne t4, t1, cs_next
+    j game_over       // head hit body
+cs_next:
+    addi t3, t3, 1
+    j cs_loop
+no_snake:
+    ret
+
+update_snake:
+    li t0, STATE
+    lw t1, LEN(t0)
+    addi t1, t1, -1   // i = LEN-1 (start at tail)
+us_loop:
+    blez t1, move_head // shift seg[1..LEN-1] only; seg[0] is rewritten below
+    slli t2, t1, 2
+    add t2, t2, t0    // STATE + i*4
+    li t3, SEGS
+    add t2, t2, t3    // &amp;seg[i]
+    lw t3, -4(t2)     // seg[i-1]
+    sw t3, 0(t2)      // seg[i] = seg[i-1]: body follows head
+    addi t1, t1, -1
+    j us_loop
+move_head:
+    lw t1, SEGS(t0)   // head address
+    lw t2, DIR(t0)
+    li t3, UP
+    beq t2, t3, go_up
+    li t3, RIGHT
+    beq t2, t3, go_right
+    li t3, DOWN
+    beq t2, t3, go_down
+    addi t1, t1, -1   // left: column - 1
+    andi t3, t1, 0x1F
+    li t4, 0x1F
+    beq t3, t4, game_over // wrapped past column 0
+    j store_head
+go_up:
+    addi t1, t1, -32  // row - 1
+    li t3, FB
+    blt t1, t3, game_over // above row 0
+    j store_head
+go_right:
+    addi t1, t1, 1    // column + 1
+    andi t3, t1, 0x1F
+    beq t3, zero, game_over // wrapped past column 31
+    j store_head
+go_down:
+    addi t1, t1, 32   // row + 1
+    li t3, 0x600
+    bge t1, t3, game_over // below row 31 (0x200+1024 = 0x600)
+store_head:
+    sw t1, SEGS(t0)
+    ret
+
+draw_apple:
+    li t0, RAND
+    lbu t1, 0(t0)     // random color (low nibble shows)
+    li t0, STATE
+    lw t2, APPLE(t0)
+    sb t1, 0(t2)
+    ret
+
+draw_snake:
+    li t0, STATE
+    lw t1, LEN(t0)
+    addi t1, t1, -1   // tail index
+    slli t1, t1, 2
+    add t1, t1, t0    // STATE + tail*4
+    li t2, SEGS
+    add t1, t1, t2
+    lw t2, 0(t1)      // tail pixel address
+    sb zero, 0(t2)    // erase tail (black)
+    lw t2, SEGS(t0)   // head pixel address
+    li t3, 1
+    sb t3, 0(t2)      // paint head white
+    ret
+
+game_over:
+    li t0, STATE
+    lw t1, SEGS(t0)
+    li t2, 2
+    sb t2, 0(t1)      // red head marks the crash
+halt:
+    jal x0, halt      // halt: jump to self (pc stops, like j . in 01-pixel)</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them. jal/jalr never touch the stack: ra is just
+a register, unlike 6502 JSR/RTS which push the PC in hardware.
+  </div>
+</div>
+<h3>Overall structure</h3>
+<p>After the <code>.equ</code> constants, the first block is:</p>
+<pre>    jal ra, init
+    jal ra, loop</pre>
+<p><code>init</code> initializes the game state, and <code>loop</code> is
+the main game loop. The <code>loop</code> subroutine itself just calls
+subroutines sequentially before looping back:</p>
+<pre>loop:
+    jal ra, read_keys
+    jal ra, check_collision
+    jal ra, update_snake
+    jal ra, draw_apple
+    jal ra, draw_snake
+    (spin delay)
+    j loop</pre>
+<h3>Zero-page usage</h3>
+<p>Game state lives in zero-page RAM at <code>0x00</code>: direction at
+<code>0x00</code>, segment count at <code>0x04</code>, apple pixel address
+at <code>0x08</code>, then one word per segment from <code>0x0C</code>
+(head first). Directions use one bit each: <code>1</code>=up,
+<code>2</code>=right, <code>4</code>=down, <code>8</code>=left &mdash;
+opposite pairs share one AND test, so reversal is rejected.</p>
+<h3>The game loop</h3>
+<h4>Reading the input</h4>
+<p><code>read_keys</code> loads <code>0xFF</code> (ASCII of the last key)
+and compares it to <code>0x77</code> (<code>w</code>),
+<code>0x64</code> (<code>d</code>), <code>0x73</code> (<code>s</code>),
+<code>0x61</code> (<code>a</code>). Each direction first checks the current
+one: moving down while pressing up is illegal, so the snake cannot reverse
+into itself.</p>
+<h4>Collision and movement</h4>
+<p><code>check_apple</code> grows the snake by one segment and places a new
+apple when head meets apple. <code>check_snake</code> ends the game when the
+head meets any body segment. <code>update_snake</code> shifts segments
+tail-ward (<code>seg[i] = seg[i-1]</code>) and moves the head one cell, with
+wall checks on all four sides &mdash; without input the snake walks right
+into the wall and halts red at <code>game_over</code>.</p>
+<h4>Rendering</h4>
+<p><code>draw_apple</code> paints the apple in a random color,
+<code>draw_snake</code> erases the tail (black) and paints the head white.
+The apple position comes from two <code>0xFE</code> reads masked to 5 bits
+(<code>X 0-31</code>, <code>Y 0-31</code>, <code>Y*32+X</code> via
+<code>slli</code>) &mdash; the whole 32x32 screen is playable because code
+lives far away at <code>0x600</code>.</p>
 </section>
 
 <section id="map">
@@ -121,7 +1519,8 @@ instruction is 4 bytes except <code>li</code> with a large immediate
 <li>Canonical first, pseudo right after: <code>li/mv/nop/j/jal/jr/ret</code>,
 <code>not/neg/seqz/snez/sltz/sgtz</code>, <code>beqz/bnez/blez/bgez/bltz/bgtz</code>,
 <code>bgt/ble/bgtu/bleu</code> all assemble to their canonical encodings.
-Disassembly shows the same folds as <code>vm.c</code>
+Disassembly shows the same folds as the C VM on the
+<code>main</code> branch
 (<code>li/mv/beqz/bnez</code>).</li>
 <li><code>li</code> takes a number or symbol only: a label address in
 <code>li</code> is out of scope (that is what <code>la</code> is for, and
@@ -134,11 +1533,13 @@ Disassembly shows the same folds as <code>vm.c</code>
 </section>
 
 <footer>
-<p><small>Terminal VM in <code>main</code> branch &mdash; this page is the web mirror.
-Book lessons live in <code>main:book/</code>; labs in <code>main:labs/</code>.</small></p>
+<p><small>EasyRISC-V &mdash; RV32I only. Prefer the terminal? The
+<code>main</code> branch has the same VM in C with an ncurses debugger
+(<code>just debug</code>). Book sources live in <code>main:book/</code>,
+labs in <code>main:labs/</code>, solutions in
+<code>main:solutions/</code>.</small></p>
 </footer>
 </div>
-<script src="labs.js"></script>
 <script src="riscv.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* EasyRISC-V Terminal - RV32I assembler + simulator (no toolchain, no server).
+/* EasyRISC-V - RV32I assembler + simulator (no toolchain, no server).
  * Mirrors skilldrick/easy6502 simulator/assembler.js structure (CC BY 4.0):
  * one RiscvWidget per .widget node: UI + Display + Memory + CPU + Assembler.
  * CPU is a faithful JS port of main-branch vm.c: 4KB flat mem, code at
@@ -252,6 +252,7 @@ function RiscvWidget(node) {
       't3', 't4', 't5', 't6'
     ];
     var regs = new Uint32Array(32);
+    var prevRegs = null, prevPc = null; // last-step snapshot for change highlight
     var pc = PROG_BASE, progSize = 0, halted = false, lastKey = 0;
     var codeRunning = false, debug = false, monitoring = false;
     var executeId = null;
@@ -565,10 +566,31 @@ function RiscvWidget(node) {
         n = n >>> 0;
         return ('00000000' + n.toString(16)).slice(-8);
       }
-      var html = 't0=0x' + h(regs[5]) + ' t1=0x' + h(regs[6]) + '<br>';
-      html += 'a0=0x' + h(regs[10]) + ' sp=0x' + h(regs[2]) + '<br>';
-      html += 'pc=0x' + h(pc) + ' ' + (halted ? 'HALT' : 'RUN');
+      // Full register file, not the reference's 4-register box:
+      // RV32I has 32 registers and the book watches all of them
+      // (02-fib traces t0/t1/t2/a0, 07-jumping watches ra/sp).
+      // Changed-since-last-step values render bold so the eye catches
+      // what the last instruction wrote.
+      var html = '<table class="regfile">';
+      var shown = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+      for (var i = 0; i < shown.length; i += 2) {
+        html += '<tr>';
+        for (var c = 0; c < 2; c++) {
+          var r = shown[i + c];
+          var changed = prevRegs && ((regs[r] ^ prevRegs[r]) !== 0);
+          html += '<td class="rn">' + regNames[r] + '</td>' +
+            '<td class="rv' + (changed ? ' changed' : '') + '">' + h(regs[r]) + '</td>';
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+      var pcChanged = (typeof prevPc === 'number') && (pc !== prevPc);
+      html += '<div class="rpc' + (pcChanged ? ' changed' : '') + '">pc=0x' + h(pc) +
+        ' ' + (halted ? 'HALT' : 'RUN') + '</div>';
       node.querySelector('.minidebugger').innerHTML = html;
+      prevRegs = Array.prototype.slice.call(regs);
+      prevPc = pc;
       if (monitoring) {
         var start = parseInt(node.querySelector('.start').value, 16);
         var len = parseInt(node.querySelector('.length').value, 16);
