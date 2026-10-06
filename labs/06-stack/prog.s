@@ -5,9 +5,9 @@
 .section .text
 .globl _start
 _start:
-    li sp, 0x1FC       # init stack pointer (like SP=$FF -> $01FF)
+    li sp, 0x1FC       # init stack pointer (top of safe RAM, below the screen)
 
-    # push 3 values (PHA equivalent)
+    # push 3 values
     li t0, 11
     addi sp, sp, -4
     sw t0, 0(sp)       # push 11

@@ -4,7 +4,7 @@
 # state below it, so the full 32x32 arena is playable.
 # Layout: 0x00 DIR, 0x04 LEN (segment count), 0x08 APPLE (pixel addr),
 #         0x0C seg[0]=head, 0x10 seg[1], ... (one word per segment).
-# Directions use one bit each (like the reference): 1=up 2=right 4=down 8=left.
+# Directions use one bit each: 1=up 2=right 4=down 8=left.
 # Opposite pairs share one AND test: up|down, right|left.
 
 .equ FB,    0x200
