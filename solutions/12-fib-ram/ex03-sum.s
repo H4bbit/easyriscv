@@ -1,4 +1,4 @@
-// Solution: build the vector, then sum words 0..7 into a1 (0+1+1+2+3+5+8+13=33)
+# Solution: build the vector, then sum words 0..7 into a1 (0+1+1+2+3+5+8+13=33)
 .section .text
 .globl _start
 _start:
@@ -35,4 +35,4 @@ addloop:
     j sum_done
 sum_done:
     j sum_done
-// Expected: a0=13, a1=33
+# Expected: a0=13, a1=33

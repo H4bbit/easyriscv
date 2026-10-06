@@ -77,10 +77,11 @@ static char *trim(char *s) {
     return s;
 }
 
-// Strip // and ; comments (riscv.js parity).
+// Strip //, # and ; comments (riscv.js parity). # is the GNU/clang-common
+// comment char; // stays accepted for old sources.
 static void sanitize(char *line) {
     for (char *p = line; *p; p++) {
-        if ((p[0] == '/' && p[1] == '/') || p[0] == ';') {
+        if ((p[0] == '/' && p[1] == '/') || p[0] == '#' || p[0] == ';') {
             *p = '\0';
             break;
         }

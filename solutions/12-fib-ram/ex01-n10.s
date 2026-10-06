@@ -1,4 +1,4 @@
-// Solution: Fibonacci N=10 -> 55 (vector 0 1 1 2 3 5 8 13 21 34 55)
+# Solution: Fibonacci N=10 -> 55 (vector 0 1 1 2 3 5 8 13 21 34 55)
 .section .text
 .globl _start
 _start:
@@ -24,4 +24,4 @@ ready:
     mv a0, t1
 done:
     j done
-// Expected: a0=55, RAM 0x000 = 0 1 1 2 3 5 8 13 (first 8 words)
+# Expected: a0=55, RAM 0x000 = 0 1 1 2 3 5 8 13 (first 8 words)
