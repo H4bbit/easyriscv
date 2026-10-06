@@ -17,7 +17,7 @@ jobs:
           echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update -q
           sudo apt-get install -y -q clang-21 llvm-21-tools just libncursesw6 libncurses-dev
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100
+          echo "CC=clang-21" >> "$GITHUB_ENV"
           for t in objcopy objdump readelf; do
             b="$(command -v llvm-$t-21 || ls /usr/lib/llvm-21/bin/llvm-$t 2>/dev/null | head -1)"
             sudo update-alternatives --install /usr/bin/llvm-$t llvm-$t "$b" 100
