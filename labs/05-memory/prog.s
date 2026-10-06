@@ -5,7 +5,7 @@
 .section .text
 .globl _start
 _start:
-    li t0, 0x000      # zero-page RAM base (like 6502 zero page)
+    li t0, 0x000      # zero-page RAM base (fast variables, game state)
     li t1, 42
     sw t1, 0(t0)      # absolute: sw t1, 0(t0)  -> *0x000 = 42
     li t1, 99

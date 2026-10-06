@@ -9,11 +9,11 @@ _start:
     beq a0, t2, ready
 loop:
     add t3, t0, t1    # t3 = F(n-1) + F(n-2)
-    addi t0, t1, 0    # canonical: t0 = t1 (see mv below)
-    addi t1, t3, 0    # canonical: t1 = t3
+    addi t0, t1, 0    # canonical copy: t0 = t1 + 0
+    mv t1, t3         # shorthand for addi t1, t3, 0
     addi t2, t2, 1    # counter++
     blt  t2, a0, loop
 ready:
-    addi a0, t1, 0    # canonical: a0 = result (13 for N=7)
+    mv a0, t1         # shorthand for addi a0, t1, 0 (13 for N=7)
 done:
-    jal x0, done
+    j done            # halt: shorthand for jal x0, done

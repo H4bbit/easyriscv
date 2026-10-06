@@ -1,7 +1,7 @@
-# Snake - Capstone game like easy6502 snake (bare-metal RISC-V)
+# Snake - capstone game (bare-metal RISC-V)
 # Framebuffer 0x200 (32x32, 1 byte/pixel), random at 0xFE, key at 0xFF (WASD)
-# Game state in zero-page RAM at 0x00 (like the reference: code lives at
-# 0x600 above the screen, state below it, full 32x32 arena is playable).
+# Game state in zero-page RAM at 0x00: code lives at 0x600 above the screen,
+# state below it, so the full 32x32 arena is playable.
 # Layout: 0x00 DIR, 0x04 LEN (segment count), 0x08 APPLE (pixel addr),
 #         0x0C seg[0]=head, 0x10 seg[1], ... (one word per segment).
 # Directions use one bit each (like the reference): 1=up 2=right 4=down 8=left.
@@ -29,7 +29,7 @@ _start:
     jal ra, loop
     j .               # loop never returns; halt if it ever does
 
-# init + loop subroutines (reference calls jsr init / jsr loop)
+# init + loop subroutines, called once each from _start
 init:
     addi sp, sp, -4   # non-leaf: save ra before nested calls (see 07-jumping)
     sw ra, 0(sp)
@@ -67,8 +67,7 @@ gen_apple:
     sw t1, APPLE(t0)
     ret
 
-# main game loop: input, update state, render (reference: readKeys,
-# checkCollision, updateSnake, drawApple, drawSnake, spinWheels)
+# main game loop: input, update state, render
 loop:
     jal ra, read_keys
     jal ra, check_collision
