@@ -46,7 +46,6 @@ enum : uint8_t {
     OP_STORE  = 0x23,
     OP_IMM    = 0x13,
     OP_OP     = 0x33,
-    OP_SYSTEM = 0x73,
 };
 
 [[nodiscard]] bool cpu_load_bin(CPU *cpu, const char *path);

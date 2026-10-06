@@ -10,8 +10,7 @@
 // Supported, mirroring riscv.js exactly:
 //   canonical RV32I: lui, jal/jalr (all forms), beq/bne/blt/bge/bltu/bgeu,
 //     lb/lh/lw/lbu/lhu, sb/sh/sw, OP-IMM (addi/slli/slti/sltiu/xori/srli/
-//     srai/ori/andi), OP (add/sub/sll/slt/sltu/xor/srl/sra/or/and),
-//     ecall/ebreak
+//     srai/ori/andi), OP (add/sub/sll/slt/sltu/xor/srl/sra/or/and)
 //   pseudo-ops: li (addi / lui / lui+addi, clang-identical split),
 //     mv, nop, not, neg, seqz/snez/sltz/sgtz,
 //     beqz/bnez/blez/bgez/bltz/bgtz, bgt/ble/bgtu/bleu,
@@ -944,11 +943,6 @@ static void assemble_line(char *rest, uint32_t addr, int lineno) {
         if (rd < 0 || !num_c(argv[1], &imm) || imm < 0 || imm > 0xFFFFF)
             fail(lineno, "bad %s args", op);
         emit(encU((uint32_t)imm, (uint32_t)rd, strcmp(op, "lui") == 0 ? 0x37 : 0x17));
-        return;
-    }
-    if (strcmp(op, "ecall") == 0 || strcmp(op, "ebreak") == 0) {
-        if (argc != 0) fail(lineno, "%s takes no args", op);
-        emit(strcmp(op, "ecall") == 0 ? 0x00000073u : 0x00100073u);
         return;
     }
     fail(lineno, "unknown instruction: %s", op);

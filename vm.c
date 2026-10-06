@@ -176,12 +176,6 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
         else snprintf(out, outlen, "%-7s %s,%s,%s", mn, reg_names[rd], reg_names[rs1], reg_names[rs2]);
         return out;
     }
-    if (opcode == OP_SYSTEM) {
-        if (instr == 0x00000073) snprintf(out, outlen, "ecall");
-        else if (instr == 0x10200073) snprintf(out, outlen, "sret");
-        else snprintf(out, outlen, "system  0x%08x", instr);
-        return out;
-    }
     snprintf(out, outlen, "unknown 0x%08x", instr);
     return out;
 }
@@ -331,15 +325,6 @@ bool cpu_step(CPU *cpu) {
                 else { if (rd != 0) cpu->regs[rd] = (uint32_t)((int32_t)cpu->regs[rs1] >> (int)(cpu->regs[rs2] & 0x1F)); }
             } else if (funct3 == 6) { if (rd != 0) cpu->regs[rd] = cpu->regs[rs1] | cpu->regs[rs2]; }
             else if (funct3 == 7) { if (rd != 0) cpu->regs[rd] = cpu->regs[rs1] & cpu->regs[rs2]; }
-            break;
-        }
-        case OP_SYSTEM: {
-            if (instr == 0x00000073) { // ecall
-                if (cpu->regs[17] == 1) { // a7==1
-                    fputc((int)(cpu->regs[10] & 0xFF), stdout); fflush(stdout);
-                }
-            } else if (instr == 0x10200073) { // sret - nop
-            }
             break;
         }
         default: break;
