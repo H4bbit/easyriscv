@@ -78,11 +78,24 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
     if (opcode == OP_JAL) {
         int32_t imm = (int32_t)(((instr >> 31) & 1) << 20 | ((instr >> 12) & 0xFF) << 12 | ((instr >> 20) & 1) << 11 | ((instr >> 21) & 0x3FF) << 1);
         imm = sign_extend((uint32_t)imm, 21);
-        snprintf(out, outlen, "jal     %s,0x%x", reg_names[rd], pc + (uint32_t)imm);
+        if (rd == 0) snprintf(out, outlen, "j       0x%x", pc + (uint32_t)imm);
+        else if (rd == 1) snprintf(out, outlen, "jal     0x%x", pc + (uint32_t)imm);
+        else snprintf(out, outlen, "jal     %s,0x%x", reg_names[rd], pc + (uint32_t)imm);
         return out;
     }
     if (opcode == OP_JALR) {
         int32_t imm = sign_extend(instr >> 20, 12);
+        if (rd == 0 && rs1 == 1 && imm == 0) { snprintf(out, outlen, "ret"); return out; }
+        if (rd == 0) {
+            if (imm == 0) snprintf(out, outlen, "jr      %s", reg_names[rs1]);
+            else snprintf(out, outlen, "jr      %d(%s)", imm, reg_names[rs1]);
+            return out;
+        }
+        if (rd == 1) {
+            if (imm == 0) snprintf(out, outlen, "jalr    %s", reg_names[rs1]);
+            else snprintf(out, outlen, "jalr    %d(%s)", imm, reg_names[rs1]);
+            return out;
+        }
         snprintf(out, outlen, "jalr    %s,%d(%s)", reg_names[rd], imm, reg_names[rs1]);
         return out;
     }
@@ -98,6 +111,10 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
         else if (funct3 == 7) mn = "bgeu";
         if (funct3 == 0 && rs2 == 0) snprintf(out, outlen, "beqz    %s,0x%x", reg_names[rs1], pc + (uint32_t)imm);
         else if (funct3 == 1 && rs2 == 0) snprintf(out, outlen, "bnez    %s,0x%x", reg_names[rs1], pc + (uint32_t)imm);
+        else if (funct3 == 5 && rs1 == 0) snprintf(out, outlen, "blez    %s,0x%x", reg_names[rs2], pc + (uint32_t)imm);
+        else if (funct3 == 5 && rs2 == 0) snprintf(out, outlen, "bgez    %s,0x%x", reg_names[rs1], pc + (uint32_t)imm);
+        else if (funct3 == 4 && rs2 == 0) snprintf(out, outlen, "bltz    %s,0x%x", reg_names[rs1], pc + (uint32_t)imm);
+        else if (funct3 == 4 && rs1 == 0) snprintf(out, outlen, "bgtz    %s,0x%x", reg_names[rs2], pc + (uint32_t)imm);
         else snprintf(out, outlen, "%-7s %s,%s,0x%x", mn, reg_names[rs1], reg_names[rs2], pc + (uint32_t)imm);
         return out;
     }
@@ -121,7 +138,8 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
         int32_t imm = sign_extend(instr >> 20, 12);
         uint32_t shamt = (instr >> 20) & 0x3F;
         if (funct3 == 0) {
-            if (rs1 == 0) snprintf(out, outlen, "li      %s,%d", reg_names[rd], imm);
+            if (rd == 0 && rs1 == 0 && imm == 0) snprintf(out, outlen, "nop");
+            else if (rs1 == 0) snprintf(out, outlen, "li      %s,%d", reg_names[rd], imm);
             else if (imm == 0) snprintf(out, outlen, "mv      %s,%s", reg_names[rd], reg_names[rs1]);
             else snprintf(out, outlen, "addi    %s,%s,%d", reg_names[rd], reg_names[rs1], imm);
         } else if (funct3 == 1 && funct7 == 0) snprintf(out, outlen, "slli    %s,%s,%u", reg_names[rd], reg_names[rs1], shamt & 0x1F);
@@ -132,7 +150,9 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
         } else {
             const char *mn = "op-imm";
             if (funct3 == 2) mn = "slti"; else if (funct3 == 3) mn = "sltiu"; else if (funct3 == 4) mn = "xori"; else if (funct3 == 6) mn = "ori"; else if (funct3 == 7) mn = "andi";
-            snprintf(out, outlen, "%-7s %s,%s,%d", mn, reg_names[rd], reg_names[rs1], imm);
+            if (funct3 == 4 && imm == -1) snprintf(out, outlen, "not     %s,%s", reg_names[rd], reg_names[rs1]);
+            else if (funct3 == 3 && imm == 1) snprintf(out, outlen, "seqz    %s,%s", reg_names[rd], reg_names[rs1]);
+            else snprintf(out, outlen, "%-7s %s,%s,%d", mn, reg_names[rd], reg_names[rs1], imm);
         }
         return out;
     }
@@ -149,7 +169,11 @@ const char *decode_to_str(uint32_t instr, uint32_t pc, char *out, size_t outlen)
         else if (funct3 == 6) mn = "or";
         else if (funct3 == 7) mn = "and";
         else mn = "op";
-        snprintf(out, outlen, "%-7s %s,%s,%s", mn, reg_names[rd], reg_names[rs1], reg_names[rs2]);
+        if (funct3 == 0 && funct7 == 0x20 && rs1 == 0) snprintf(out, outlen, "neg     %s,%s", reg_names[rd], reg_names[rs2]);
+        else if (funct3 == 3 && funct7 == 0 && rs1 == 0) snprintf(out, outlen, "snez    %s,%s", reg_names[rd], reg_names[rs2]);
+        else if (funct3 == 2 && funct7 == 0 && rs2 == 0) snprintf(out, outlen, "sltz    %s,%s", reg_names[rd], reg_names[rs1]);
+        else if (funct3 == 2 && funct7 == 0 && rs1 == 0) snprintf(out, outlen, "sgtz    %s,%s", reg_names[rd], reg_names[rs2]);
+        else snprintf(out, outlen, "%-7s %s,%s,%s", mn, reg_names[rd], reg_names[rs1], reg_names[rs2]);
         return out;
     }
     if (opcode == OP_SYSTEM) {
