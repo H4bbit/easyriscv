@@ -43,10 +43,9 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q gcc-14 llvm-21-tools just libncursesw6 libncurses-dev
           echo "CC=gcc-14" >> "$GITHUB_ENV"
-          for t in objcopy objdump readelf; do
-            b="$(command -v llvm-$t-21 || ls /usr/lib/llvm-21/bin/llvm-$t 2>/dev/null | head -1)"
-            sudo update-alternatives --install /usr/bin/llvm-$t llvm-$t "$b" 100
-          done
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-21 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-21 100
+          sudo update-alternatives --install /usr/bin/llvm-readelf llvm-readelf /usr/bin/llvm-readelf-21 100
       - name: Build VM (gcc-14)
         run: just build
       - name: Cross-check assembler (./asm vs clang-21 ref)
