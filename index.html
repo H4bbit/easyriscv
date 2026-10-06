@@ -180,12 +180,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p><code>addi t0, zero, 1</code> adds <code>1</code> to the always-zero
@@ -322,12 +317,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p><code>addi rd, rs, 0</code> copies <code>rs</code> to <code>rd</code>
@@ -424,12 +414,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p>Step through it: <code>t0</code> goes <code>8&rarr;7&rarr;6&rarr;5&rarr;4&rarr;3</code>
@@ -535,12 +520,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p>Step and tick <strong>Monitor</strong> (start <code>0</code>, length
@@ -663,12 +643,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p>Pops come out in LIFO order: <code>33</code>, <code>22</code>,
@@ -709,7 +684,7 @@ the stack: <code>ra</code> is just a register. A nested <code>jal</code>
 overwrites it, so a function that calls another must save <code>ra</code>
 first (for example with <code>sw ra, 0(sp)</code>) and restore it before
 returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).</p>
+it breaks the outer return (try exercise 1 below).</p>
 <pre>outer:
     addi sp, sp, -4
     sw ra, 0(sp)
@@ -802,12 +777,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p>This goes <code>0&rarr;1&rarr;5&rarr;15</code> with nested
@@ -912,12 +882,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <p><code>0xFE</code> is how games roll dice: mask it down
@@ -1025,12 +990,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <h3>Logic: AND / OR / XOR</h3>
@@ -1150,12 +1110,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <h3>Base + index&times;4</h3>
@@ -1486,12 +1441,7 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. A nested <code>jal</code>
-overwrites it, so a function that calls another must save <code>ra</code>
-first (for example with <code>sw ra, 0(sp)</code>) and restore it before
-returning &mdash; the save is your code&rsquo;s own convention, and removing
-it breaks the outer return (try it in the Jumping chapter below).
+lessons never use them.
   </div>
 </div>
 <h3>Overall structure</h3>
