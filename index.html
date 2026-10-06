@@ -134,7 +134,7 @@ instructions did one <code>li</code> become?</li>
   </div>
   <textarea class="code" spellcheck="false"># First program - load immediates and store bytes to the framebuffer
 # Draws 3 pixels on the 32x32 framebuffer at 0x200 (1 byte/pixel)
-# Step 1 is canonical (addi/jal), step 2 is the shorthand (li/j).
+# Step 1 is canonical (addi, jal x0), step 2 is the shorthand (li, j, nop).
 .section .text
 .globl _start
 _start:
@@ -145,6 +145,7 @@ _start:
     sb t0, 1(t1)      # pixel (1,0)
     li t0, 8          # shorthand for addi t0, zero, 8: orange
     sb t0, 2(t1)      # pixel (2,0)
+    nop               # shorthand for addi x0, x0, 0: one quiet cycle
     jal x0, .         # halt: jump to self (j . is shorthand)</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
   <div class="debugger">
@@ -207,7 +208,8 @@ wide: <code>0x200-0x21F</code> is row 0, next row starts at
 <p>Then the same idea in shorthand: <code>li t0, 5</code> /
 <code>li t0, 8</code> (each is <code>addi</code> from <code>zero</code>).
 <code>pc</code> starts at <code>0x600</code> and advances by 4 per
-instruction.</p>
+instruction. (<code>nop</code> is <code>addi x0, x0, 0</code> &mdash; a deliberate
+quiet cycle before the halt.)</p>
 <h3>Why This Matters</h3>
 <p>On real hardware video is more complex, but the idea is the same:
 memory-mapped I/O. Writing to <code>0x200</code> is not plain RAM &mdash;
@@ -275,14 +277,14 @@ _start:
     beq a0, t2, ready
 loop:
     add t3, t0, t1    # t3 = F(n-1) + F(n-2)
-    addi t0, t1, 0    # canonical: t0 = t1 (see mv below)
-    addi t1, t3, 0    # canonical: t1 = t3
+    addi t0, t1, 0    # canonical copy: t0 = t1 + 0
+    mv t1, t3         # shorthand for addi t1, t3, 0
     addi t2, t2, 1    # counter++
     blt  t2, a0, loop
 ready:
-    addi a0, t1, 0    # canonical: a0 = result (13 for N=7)
+    mv a0, t1         # shorthand for addi a0, t1, 0 (13 for N=7)
 done:
-    jal x0, done</textarea>
+    j done            # halt: shorthand for jal x0, done</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
   <div class="debugger">
     <input type="checkbox" class="debug" name="debug" />
@@ -322,7 +324,9 @@ lessons never use them.
 </div>
 <p><code>addi rd, rs, 0</code> copies <code>rs</code> to <code>rd</code>
 &mdash; that is the whole trick behind the shorthand <code>mv rd, rs</code>
-(<strong>Disassemble</strong> shows both as <code>addi</code>).
+(<strong>Disassemble</strong> shows both as <code>addi</code>). The loop
+above shows both spellings side by side: the first copy stays canonical,
+the other two already use <code>mv</code>.
 (<code>blt</code> is a preview: branches are covered in
 <a href="#branching">the next chapter</a>.)</p>
 <h3>Exercises</h3>
@@ -345,8 +349,10 @@ run it and check the final pixel (which holds <code>sp &amp; 0xF</code>).</li>
 <code>if (t0 != t2) pc = loop</code>. No separate compare instruction is
 needed &mdash; the branch does the compare itself. Other forms:
 <code>beq</code> (equal), <code>blt</code> (signed less), <code>bge</code>,
-<code>bltu</code> (unsigned), <code>bgeu</code>. Pseudo
-<code>beqz rs, label</code> is <code>beq rs, zero, label</code>.</p>
+<code>bltu</code> (unsigned), <code>bgeu</code>. Pseudos
+<code>beqz</code>/<code>bnez rs, label</code> are <code>beq</code>/<code>bne rs, zero,
+label</code> &mdash; the second half of the program proves it: the loop really
+ended at 3, so the <code>bnez</code> never jumps back.</p>
 <div class="widget">
   <div class="buttons">
     <input type="button" value="Assemble" class="assembleButton" />
@@ -358,7 +364,8 @@ needed &mdash; the branch does the compare itself. Other forms:
   </div>
   <textarea class="code" spellcheck="false"># Branching - counted loop with explicit compare branches
 # Counts down from 8 to 3, writing pixel color at 0x200 each iteration
-# Demonstrates beq/bne with no flags register (explicit compare)
+# Canonical compare first (bne on two registers), shorthand after
+# (bnez against zero). No flags register anywhere.
 
 .section .text
 .globl _start
@@ -370,16 +377,19 @@ _start:
 loop:
     addi t0, t0, -1       # count down
     sb   t0, 0(t1)        # write color at 0x200 - 1 byte/pixel
-    bne  t0, t2, loop     # branch if !=
+    bne  t0, t2, loop     # canonical: branch on two registers
+
+    sub  t3, t0, t2       # t3 = 3 - 3 = 0 (the loop really ended at 3)
+    bnez t3, loop         # shorthand for bne t3, zero, loop: never taken
 
     # store final value at next pixel to observe halt
     sb   t0, 1(t1)
-    j    .                # halt
+    j    .                # halt: shorthand for jal x0, .
 
-# Exercises:
-# 1. Change BNE to BEQ and observe infinite loop vs immediate halt
+# Exercises (see book/05-branching.md):
+# 1. Change BNE to BEQ and observe fall-through vs loop
 # 2. Use BLT/BGE to branch on signed less-than (e.g., blt t0, t2, loop)
-# 3. Try BLTU for unsigned compare</textarea>
+# 3. Count up with addi + bne; then translate bnez &lt;-&gt; bne ..., zero</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
   <div class="debugger">
     <input type="checkbox" class="debug" name="debug" />
@@ -569,9 +579,9 @@ The stack grows down from <code>0x1FC</code> (code lives far above at
 .section .text
 .globl _start
 _start:
-    li sp, 0x1FC       # init stack pointer (like SP=$FF -&gt; $01FF)
+    li sp, 0x1FC       # init stack pointer (top of safe RAM, below the screen)
 
-    # push 3 values (PHA equivalent)
+    # push 3 values
     li t0, 11
     addi sp, sp, -4
     sw t0, 0(sp)       # push 11
@@ -702,45 +712,50 @@ it breaks the outer return (try exercise 1 below).</p>
     <input type="button" value="Notes" class="notesButton" />
   </div>
   <textarea class="code" spellcheck="false"># Jumping - jal/jalr subroutine calls and unconditional jumps
-# Demonstrates jal (call/jump) and jalr/ret (return)
+# jal rd stores pc+4 in rd and jumps: it never touches the stack.
+# Saving ra with sw is software convention: your code pushes, your code
+# pops. A nested jal overwrites ra, so a function that calls another
+# must save ra first (see outer below; solutions ex01 shows the breakage).
+# First half spells everything canonically (explicit x0/x1), second half
+# uses the aliases (j, ret, jr) for the same observable FB = 1, 5, 15.
 
 .section .text
 .globl _start
 _start:
     li t0, 0
-    jal ra, inc_one   # call: stores pc+4 in ra, jumps (no stack involved)
+    jal x1, inc_one   # canonical call: x1 is ra, no stack involved
     # t0 should be 1 here
     li t1, 0x200
     sb t0, 0(t1)       # FB[0] = 1 (1 byte/pixel)
 
-    j after           # unconditional jump (jal x0: discards return address)
+    jal x0, after     # canonical jump: x0 discards the return address
     li t0, 99         # skipped
 after:
     addi t0, t0, 4    # t0 = 5
     sb t0, 1(t1)      # FB[1] = 5
 
-    # nested call test: save ra on stack
+    # nested call test: save ra on the stack before the inner call
     li sp, 0x1FC
-    jal ra, outer
+    jal ra, outer     # jal ra is jal x1: same canonical instruction
     sb t0, 2(t1)      # FB[2] should be 15
-    j .
+    j .               # halt: shorthand for jal x0, .
 
 inc_one:
     addi t0, t0, 1
-    jalr zero, 0(ra)  # return through ra
+    jalr x0, 0(x1)    # canonical return through x1 (= ra)
 
 outer:
     addi sp, sp, -4
-    sw ra, 0(sp)
+    sw ra, 0(sp)      # inner would overwrite ra (see solutions ex01)
     addi t0, t0, 1    # t0 5-&gt;6
     jal ra, inner
     lw ra, 0(sp)
     addi sp, sp, 4
-    jalr zero, 0(ra)
+    ret               # shorthand for jalr x0, 0(x1)
 
 inner:
     addi t0, t0, 9    # t0 6-&gt;15
-    jalr zero, 0(ra)
+    jr ra             # shorthand for jalr x0, 0(ra)
 
 # Expected FB: 1, 5, 15</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
@@ -847,7 +862,7 @@ _start:
 # 1. Print "HI" instead: change the two characters (72='H', 73='I')
 # 2. Print digit '5' (53) via a 0x1000 store
 # 3. Echo the last key: load 0xFF, mask the low nibble, store to FB[1]
-#    (press a key anywhere on the page and watch the pixel change)</textarea>
+#    (press a key in 'just debug 10-io' and watch the pixel change)</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
   <div class="debugger">
     <input type="checkbox" class="debug" name="debug" />
@@ -925,16 +940,18 @@ canvas as a truth table. It assumes you can dice and mask
     <input type="button" value="Notes" class="notesButton" />
   </div>
   <textarea class="code" spellcheck="false"># ALU - AND/OR/XOR bitwise ops and immediate masking
-# Demonstrates andi/ori/xori and bit masking (e.g. AND #0x03 style masks)
+# First half is canonical (and/andi, or, xori with explicit -1);
+# second half is the shorthand spellings (not, neg, seqz, snez)
+# for the same hardware. FB = dice 2-5, 15, 0, then fixed 5, 9, 0, 1.
 
 .section .text
 .globl _start
 _start:
-    # load random byte from 0xFE (sysRandom)
+    # load random byte from 0xFE
     li t0, 0xFE
     lbu t1, 0(t0)      # t1 = random 0-255
     andi t1, t1, 0x03  # mask low 2 bits -&gt; 0-3
-    addi t1, t1, 2     # 2-5 (like apple Y 2-5)
+    addi t1, t1, 2     # 2-5
     # write result to framebuffer
     li t2, 0x200
     sb t1, 0(t2)       # FB[0] = 2-5
@@ -945,17 +962,32 @@ _start:
     or t5, t3, t4      # 00001111 = 15
     sb t5, 1(t2)       # FB[1] = 15
 
-    # XOR toggle
+    # XOR toggle, canonical spelling
     li t6, 0xFF
     xori t6, t6, 0x0F  # 0xF0 -&gt; low nibble 0
     sb t6, 2(t2)       # FB[2] = 0
 
+    # --- shorthand half: same ALU, alias spellings ---
+    li t3, 0x0A        # 00001010
+    not t4, t3        # = xori t4, t3, -1 -&gt; 0xFFFFFFF5
+    sb t4, 3(t2)       # FB[3] = 5
+
+    li t5, 7
+    neg t6, t5        # = sub t6, x0, t5 -&gt; -7 = 0xFFFFFFF9
+    sb t6, 4(t2)       # FB[4] = 9
+
+    seqz s0, t5       # = sltiu s0, t5, 1 -&gt; 0 (7 != 0)
+    sb s0, 5(t2)       # FB[5] = 0
+    snez s1, t5       # = sltu s1, x0, t5 -&gt; 1 (0 &lt; 7 unsigned)
+    sb s1, 6(t2)       # FB[6] = 1
+
     j .
 
-# Exercises:
-# 1. Change mask 0x03 to 0x07 -&gt; range 0-7
+# Exercises (see book/11-alu.md):
+# 1. Change mask 0x03 to 0x07 -&gt; range 0-7, then +2 -&gt; 2-9
 # 2. Use slli/srli to extract high nibble (&gt;&gt;4)
-# 3. Combine random X in 0xFE and Y masked to make pixel coord</textarea>
+# 3. sub + slt by hand (10 vs 3, both directions)
+# 4. Translate not/neg/seqz/snez to canonical and back; disasm must not change</textarea>
   <canvas class="screen" width="160" height="160"></canvas>
   <div class="debugger">
     <input type="checkbox" class="debug" name="debug" />
@@ -1010,7 +1042,13 @@ nibble (<code>0xFF</code> becomes <code>0xF0</code>, low nibble
 </ul>
 <p>Register-register (<code>and</code>/<code>or</code>/<code>xor</code>) and
 immediate (<code>andi</code>/<code>ori</code>/<code>xori</code>) forms both
-exist.</p>
+exist. The second half of the program re-spells the same hardware with
+shorthands &mdash; <code>not</code> is <code>xori ..., -1</code>,
+<code>neg</code> is <code>sub</code> from <code>x0</code>,
+<code>seqz</code>/<code>snez</code> are <code>sltiu</code>/<code>sltu</code>
+compares against zero/one: <strong>Disassemble</strong> shows both halves
+as the same canonical encodings, and the extra pixels
+(<code>5, 9, 0, 1</code>) are its proof.</p>
 <h3>Shifts and compare</h3>
 <ul>
 <li><code>slli t4, t2, 2</code> &mdash; shift left by 2 = &times;4. This is
@@ -1187,7 +1225,7 @@ _start:
     jal ra, loop
     j .               # loop never returns; halt if it ever does
 
-# init + loop subroutines (called once each at startup above)
+# init + loop subroutines, called once each from _start
 init:
     addi sp, sp, -4   # non-leaf: save ra before nested calls (see 07-jumping)
     sw ra, 0(sp)
@@ -1225,8 +1263,7 @@ gen_apple:
     sw t1, APPLE(t0)
     ret
 
-# main game loop: input, update state, render (reference: readKeys,
-# checkCollision, updateSnake, drawApple, drawSnake, spinWheels)
+# main game loop: input, update state, render
 loop:
     jal ra, read_keys
     jal ra, check_collision
