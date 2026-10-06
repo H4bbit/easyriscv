@@ -3,7 +3,8 @@
 RISC-V arithmetic is three-operand with no flags: the result goes to a
 register, and the next instruction decides what to do with it. This lab
 tours the whole integer ALU — logic, shifts, compare — using the
-framebuffer as a truth table.
+framebuffer as a truth table. First half is canonical, second half is
+the shorthand spelling of the same hardware.
 
 ## Setup: `08-alu` needs `0xFE` first
 
@@ -51,6 +52,17 @@ Register-register (`and`/`or`/`xor`) and immediate (`andi`/`ori`/`xori`)
 forms both exist. The `i` form sign-extends a 12-bit immediate — fine for
 masks like `0x03` or `0x0F`.
 
+## Shorthand half: NOT / NEG / set-if
+
+The second half of `prog.s` re-spells three canonical shapes with aliases:
+
+* `not t4, t3` is `xori t4, t3, -1` — flip every bit (`0x0A` → `0xFFFFFFF5`, `FB[3] = 5`).
+* `neg t6, t5` is `sub t6, x0, t5` — two's complement (`7` → `-7` = `0xFFFFFFF9`, `FB[4] = 9`).
+* `seqz s0, t5` is `sltiu s0, t5, 1` — `1` only if `t5 == 0` (`FB[5] = 0`); `snez s1, t5` is `sltu s1, x0, t5` — `1` unless `t5 == 0` (`FB[6] = 1`).
+* Same family, used across the labs: `sltz rs` is `slt rd, rs, x0` (negative?) and `sgtz rs` is `slt rd, x0, rs` (positive?).
+
+`just disasm 08-alu` is the answer key: canonical `xori` at `0x62c` stays `xori`, while the alias spellings print as `not` (`0x638`), `neg` (`0x644`), `seqz` (`0x64c`), `snez` (`0x654`).
+
 ## Shifts and compare (used across the labs)
 
 Two families you have already seen but never isolated:
@@ -66,13 +78,18 @@ Two families you have already seen but never isolated:
 ## Try It
 
 Step and watch `t1`: it starts random, then snaps to `2-5` after the mask.
-`FB[0]` is non-deterministic (dice), `FB[1]=15` and `FB[2]=0` are fixed —
-that split is the point: mask dice, assert logic.
+`FB[0]` is non-deterministic (dice), `FB[1]=15` and `FB[2]=0` are fixed — and the shorthand half is fully fixed: `FB[3]=5`, `FB[4]=9`, `FB[5]=0`, `FB[6]=1`.
+Headless prints e.g. `Framebuffer 0x200: 3 15 0 5 9 0 1 0` (first value varies per run).
+
+## Translation exercise
+
+Translate both ways and confirm `disasm` does not change: `xori t4, t3, -1` ↔ `not t4, t3`, `sub t6, x0, t5` ↔ `neg t6, t5`, `sltiu s0, t5, 1` ↔ `seqz s0, t5`, `sltu s1, x0, t5` ↔ `snez s1, t5`.
 
 ## Exercises
 
 1. Change the mask `0x03` to `0x07`: what range lands in `FB[0]`? ([solution](../solutions/11-alu/ex01-mask7.s))
 2. Extract the high nibble of a random byte: `srli` right by 4. ([solution](../solutions/11-alu/ex02-high-nibble.s))
 3. `sub` + `slt` by hand: `t3=10, t4=3` — compute `t3-t4` and `slt` both directions. ([solution](../solutions/11-alu/ex03-sub-slt.s))
+4. Write `sltz`/`sgtz` over a negative and a positive value, then read back the canonical `slt` forms in `disasm`.
 
 Next: [12-fib-ram.md](12-fib-ram.md)

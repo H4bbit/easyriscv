@@ -17,14 +17,16 @@ Source (`labs/01-pixel/prog.s`) — step 1 is canonical, step 2 is shorthand:
     sb t0, 1(t1)      # pixel (1,0)
     li t0, 8          # shorthand for addi t0, zero, 8: orange
     sb t0, 2(t1)      # pixel (2,0)
+    nop               # shorthand for addi x0, x0, 0: does nothing, one cycle
     jal x0, .         # halt: jump to self (j . is shorthand)
 ```
 
 `addi t0, zero, 1` adds `1` to the always-zero register — that is how a
 constant enters a register. `li t0, 5` is the assembler's shorthand for the
-same shape (`addi t0, zero, 5`); `just disasm 01-pixel` shows both forms
-as `addi`. `jal x0, .` jumps to itself: `pc` never moves, so the VM halts
-(`j .` is the shorthand).
+same shape (`addi t0, zero, 5`); `just disasm 01-pixel` shows `li` where you
+wrote it and `addi` only where you spelled it canonically. Same for jumps:
+`jal x0, .` jumps to itself (`pc` never moves, so the VM halts) and `disasm`
+prints the alias `j`; `nop` is `addi x0, x0, 0`, a deliberate no-op.
 
 You should see three colored pixels at the top-left of the framebuffer panel. Headless shows:
 
@@ -44,7 +46,7 @@ Reset and step (`SPACE`). Watch `pc` and `t0` in `w_regs`:
 2. `addi t1, zero, 0x200` — `t1 = 0x200`. `0x` means hex.
 3. `sb t0, 0(t1)` — stores the low byte of `t0` to memory at `t1+0` (`0x200`). This is how the framebuffer is drawn. `0x200-0x2FF` is row 0, `0x220-` row 1, etc. — 32 bytes per row, 32 rows. Low 4 bits are the color.
 
-Then the same idea in shorthand: `li t0, 5` / `li t0, 8` (each is `addi` from `zero`). Step them and watch `t0` change to `5` then `8` with two more pixels. `pc` starts at `0x600` and advances by 4 per instruction.
+Then the same idea in shorthand: `li t0, 5` / `li t0, 8` (each is `addi` from `zero`), one `nop` (`addi x0, x0, 0`) breathing room, then the halt. Step them and watch `t0` change to `5` then `8` with two more pixels. `pc` starts at `0x600` and advances by 4 per instruction.
 
 ## Why This Matters
 

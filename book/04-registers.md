@@ -15,7 +15,7 @@ zero:00000000 ra:00000000 sp:00000000 gp:00000000
 RISC-V has 32 32-bit registers `x0-x31` with ABI names:
 
 * `zero (x0)` — always 0. Writes are ignored. Use it to compare against zero (`beq rs, zero, label`) or as source for `li`: `li t0, 5` assembles to `addi t0, zero, 5`.
-* `ra (x1)` — return address for `jal`. Holds where to return after a function call.
+* `ra (x1)` — return address for `jal`. Holds where to return after a function call. `jal` only writes it — saving it with `sw` before a nested call is your code's convention (see [08-jumping](08-jumping.md)).
 * `sp (x2)` — stack pointer. You set it yourself (`li sp, 0x1FC`). It grows down with `addi sp, sp, -4`.
 * `gp (x3), tp (x4)` — global and thread pointers, rarely used bare-metal.
 * `t0-t6 (x5-x7, x28-x31)` — temporaries, caller-saved. Use them for scratch values.
@@ -35,7 +35,7 @@ just debug 02-fib
 # step, watch t0/t1/t2/a0 and pc (blt is a preview: branches are covered in [05-branching](05-branching.md))
 ```
 
-`02-fib` computes Fibonacci(7) = 13 with a counted loop — canonical copies first, shorthand after:
+`02-fib` computes Fibonacci(7) = 13 with a counted loop — copies are canonical first, shorthand after:
 
 ```asm
     li a0, 7          # N = 7
@@ -44,16 +44,20 @@ just debug 02-fib
 loop:
     add t3, t0, t1    # 3-operand: t3 = t0 + t1
     addi t0, t1, 0    # canonical copy: t0 = t1 + 0
-    addi t1, t3, 0    # canonical copy: t1 = t3 + 0
+    mv  t1, t3        # shorthand for addi t1, t3, 0
     blt t2, a0, loop
 ```
 
-`addi rd, rs, 0` copies `rs` to `rd` — that is the whole trick behind the shorthand `mv rd, rs` (`just disasm 02-fib` shows both as `addi`). From here on the book writes `mv` and you read it as `addi ..., 0`.
+`addi rd, rs, 0` copies `rs` to `rd` — that is the whole trick behind the shorthand `mv rd, rs`. `just disasm 02-fib` shows the proof: the loop body disassembles to `mv t0, t1` (at `0x61c`) and `mv t1, t3` (at `0x620`) — the hardware sees the same shape either way, and the book keeps both spellings side by side from here on (`addi ..., 0` and `mv` stay interchangeable in every later lab).
+
+## Translation exercise
+
+Read the `disasm` answer key (`0x61c`, `0x620`, `0x62c` all print `mv`), then translate by hand: `addi a0, t1, 0` ↔ `mv a0, t1` in the `ready:` tail. Assemble your spelling and confirm the `disasm` output does not change.
 
 ## Exercises
 
-1. Rewrite the loop copies with `mv` (`mv t0, t1` for `addi t0, t1, 0`) and confirm `a0=13` is unchanged. ([solution](../solutions/04-registers/ex01-addi-move.s))
+1. Rewrite the remaining canonical copy with `mv` (`mv t0, t1` for `addi t0, t1, 0`) and confirm `a0=13` is unchanged — `disasm` stays `mv t0, t1` either way. ([solution](../solutions/04-registers/ex01-addi-move.s))
 2. What happens if you write to `zero`? Try `addi zero, t0, 0` then `addi a0, zero, 0`. ([solution](../solutions/04-registers/ex02-write-zero.s))
-3. Compare `sp` after `07-stack` (preview: the stack pointer is covered in [07-stack](07-stack.md)): run it headless and check the final `t0` (which holds `sp & 0xF`).
+3. Translate the `ready:` tail both ways (`addi a0, t1, 0` ↔ `mv a0, t1`), checking `just disasm 02-fib` after each edit.
 
 Next: [05-branching.md](05-branching.md)

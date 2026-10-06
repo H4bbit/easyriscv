@@ -10,7 +10,7 @@ a 32x32 framebuffer, and self-contained lessons.
   print-char port at `0x1000`
 * `ui.c` — ncurses debugger: disassembly (PC in yellow), registers,
   memory hexdump, framebuffer pixels
-* `labs/` — one `prog.s` per lesson, assembled bare-metal at `0x600` (above the screen, like easy6502)
+* `labs/` — one `prog.s` per lesson, assembled bare-metal at `0x600` (code above the screen, state below it)
 * `book/` — self-contained lessons, `00` to `12`, no prerequisites
 * `solutions/` — exercise answers per lab
 

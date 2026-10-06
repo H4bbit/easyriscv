@@ -30,7 +30,7 @@ Every memory access is a `lw`/`sw` (or `lh`/`lb`/`lbu`/`sh`/`sb`) with `base + 1
 * `lb`/`lbu` — byte (sign/zero extended)
 * `sb`/`sh` — byte/halfword store
 
-Our memory is `0x000-0xFFF`: `0x000` zero-page RAM, `0x100` stack, `0x200` framebuffer, `0x600` code.
+Our memory is `0x000-0xFFF`: `0x000` zero-page RAM, `0x100-0x1FF` stack (top `0x1FC`, grows down), `0x200-0x5FF` framebuffer, `0x600` code.
 
 ## Try It
 
