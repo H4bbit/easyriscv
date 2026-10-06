@@ -23,7 +23,7 @@ objdump := env_var_or_default("OBJDUMP", "llvm-objdump")
 readelf := env_var_or_default("READELF", "llvm-readelf")
 ldflags := "-lncursesw"
 
-# Build VM (replaces Makefile)
+# Build VM + assembler
 build:
     {{cc}} {{cflags}} -c vm.c -o vm.o
     {{cc}} {{cflags}} -c ui.c -o ui.o
@@ -39,6 +39,7 @@ clean:
 # reference toolchain output — clang by default, see just check-asm).
 # The reference toolchain stays as independent ground truth for
 # inspection (disasm/elf/hex).
+# Assemble a lab into a flat binary via ./asm
 assemble lab="01-first-pixel":
     #!/bin/bash
     set -e
@@ -50,13 +51,15 @@ assemble lab="01-first-pixel":
     echo "BIN:"; xxd $bin | head -n 5
     echo "size $(wc -c < $bin) bytes"
 
+# Run a lab headless (assemble + run to halt, print regs/mem)
 run lab="01-first-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin --headless
 
+# Debug a lab in the ncurses debugger (SPACE step, r run, q quit)
 debug lab="01-first-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin
 
-# Run all labs headless (14-snake halts at game_over without input; steer with just debug 14-snake. 09-logic/08-dice use random)
+# Run every lab headless (14-snake halts at game_over; steer it with just debug 14-snake. 09-logic/08-dice use random)
 all:
     just run 01-first-pixel
     just run 03-registers
@@ -71,28 +74,26 @@ all:
     just run 12-calls
     just run 13-keys-print
 
-# Run with step limit (for infinite loops like Snake)
+# Run a lab with a step limit (for infinite loops like Snake)
 run-steps lab="14-snake" steps="1000":
     just assemble {{lab}}
     ./vm {{bindir}}/{{lab}}.bin --headless --steps {{steps}}
 
-# Inspection (reference toolchain ground truth: clang+llvm by default,
-# swappable via RISCV_CC/RISCV_FLAGS/OBJCOPY/OBJDUMP/READELF).
-# Builds the reference ELF, proving decode_to_str against objdump.
+# Disassemble a lab via the reference toolchain (proves decode_to_str against objdump)
 disasm lab="01-first-pixel":
     {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
     {{objdump}} -d {{bindir}}/{{lab}}.elf
 
+# Show ELF headers of a lab (reference-built, via readelf)
 elf lab="01-first-pixel":
     {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
     {{readelf}} -h -S -l {{bindir}}/{{lab}}.elf
 
+# Hexdump a lab's flat binary
 hex lab="01-first-pixel":
     xxd {{bindir}}/{{lab}}.bin
 
-# Cross-check: our ./asm must be byte-identical to the reference toolchain
-# for every lab and every solution. Catches drift between asm.c and the
-# reference assembler.
+# Cross-check ./asm against the reference toolchain on every lab+solution (byte-identical or fail)
 check-asm:
     #!/bin/bash
     set -e
