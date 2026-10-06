@@ -28,3 +28,28 @@ jobs:
         run: just check-asm
       - name: Run all labs headless
         run: just all
+  gcc-14:
+    # Portability probe: same build+labs+check-asm under gcc-14 (noble
+    # universe, has C23 constexpr since gcc-13). Exercises the CC=
+    # override Justfile promises; clang-21 stays the reference toolchain
+    # (riscv_cc/objcopy/objdump come from the llvm-21 step below).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update -q
+          sudo apt-get install -y -q gcc-14 llvm-21-tools just libncursesw6 libncurses-dev
+          echo "CC=gcc-14" >> "$GITHUB_ENV"
+          for t in objcopy objdump readelf; do
+            b="$(command -v llvm-$t-21 || ls /usr/lib/llvm-21/bin/llvm-$t 2>/dev/null | head -1)"
+            sudo update-alternatives --install /usr/bin/llvm-$t llvm-$t "$b" 100
+          done
+      - name: Build VM (gcc-14)
+        run: just build
+      - name: Cross-check assembler (./asm vs clang-21 ref)
+        run: just check-asm
+      - name: Run all labs headless (gcc-14 build)
+        run: just all
