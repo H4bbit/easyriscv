@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L // BEFORE any include: nanosleep visible under -std=c23 strict ANSI (glibc hides it)
 #include "vm.h"
 #include "ui.h"
 #include <stdio.h>
@@ -75,7 +76,7 @@ int main(int argc, char **argv){
                     int ch=getch();
                     if(ch=='q' || ch==' ') break;
                     if(ch=='R'){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); break; }
-                    usleep(10000);
+                    { struct timespec ts = {0, 10000 * 1000}; nanosleep(&ts, nullptr); }
                 }
             }
             nodelay(stdscr, FALSE);
@@ -86,7 +87,7 @@ int main(int argc, char **argv){
             for(int i=0;i<200 && !cpu.halted;i++){
                 (void)cpu_step(&cpu);
                 ui_draw(&ui,&cpu);
-                usleep(30000);
+                { struct timespec ts = {0, 30000 * 1000}; nanosleep(&ts, nullptr); }
                 int ch=getch();
                 if(ch!=ERR) { nodelay(stdscr,FALSE); break; }
             }
