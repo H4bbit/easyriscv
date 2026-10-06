@@ -5,7 +5,7 @@
 // clang stays as independent ground truth (just disasm/elf/hex,
 // just check-asm).
 //
-// Usage: asm labs/01-pixel/prog.s /tmp/01-pixel.bin
+// Usage: asm labs/01-first-pixel/prog.s /tmp/01-first-pixel.bin
 //
 // Supported, mirroring riscv.js exactly:
 //   canonical RV32I: lui, jal/jalr (all forms), beq/bne/blt/bge/bltu/bgeu,

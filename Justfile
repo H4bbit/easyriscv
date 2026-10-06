@@ -39,7 +39,7 @@ clean:
 # reference toolchain output — clang by default, see just check-asm).
 # The reference toolchain stays as independent ground truth for
 # inspection (disasm/elf/hex).
-assemble lab="01-pixel":
+assemble lab="01-first-pixel":
     #!/bin/bash
     set -e
     src="labs/{{lab}}/prog.s"
@@ -50,40 +50,44 @@ assemble lab="01-pixel":
     echo "BIN:"; xxd $bin | head -n 5
     echo "size $(wc -c < $bin) bytes"
 
-run lab="01-pixel": (assemble lab)
+run lab="01-first-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin --headless
 
-debug lab="01-pixel": (assemble lab)
+debug lab="01-first-pixel": (assemble lab)
     ./{{vm}} {{bindir}}/{{lab}}.bin
 
-# Run all labs headless (09-snake halts at game_over without input; steer with just debug 09-snake. 08-alu/10-io use random)
+# Run all labs headless (14-snake halts at game_over without input; steer with just debug 14-snake. 09-logic/08-dice use random)
 all:
-    just run 01-pixel
-    just run 02-fib
-    just run 03-fib-ram
-    just run 04-branching
-    just run 05-memory
-    just run 06-stack
-    just run 07-jumping
-    just run 10-io
+    just run 01-first-pixel
+    just run 03-registers
+    just run 04-loop
+    just run 05-compares
+    just run 06-bytes-ram
+    just run 07-words-vectors
+    just run 08-dice
+    just run 09-logic
+    just run 10-big-addresses
+    just run 11-stack
+    just run 12-calls
+    just run 13-keys-print
 
 # Run with step limit (for infinite loops like Snake)
-run-steps lab="09-snake" steps="1000":
+run-steps lab="14-snake" steps="1000":
     just assemble {{lab}}
     ./vm {{bindir}}/{{lab}}.bin --headless --steps {{steps}}
 
 # Inspection (reference toolchain ground truth: clang+llvm by default,
 # swappable via RISCV_CC/RISCV_FLAGS/OBJCOPY/OBJDUMP/READELF).
 # Builds the reference ELF, proving decode_to_str against objdump.
-disasm lab="01-pixel":
+disasm lab="01-first-pixel":
     {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
     {{objdump}} -d {{bindir}}/{{lab}}.elf
 
-elf lab="01-pixel":
+elf lab="01-first-pixel":
     {{riscv_cc}} {{riscv_flags}} -o {{bindir}}/{{lab}}.elf labs/{{lab}}/prog.s
     {{readelf}} -h -S -l {{bindir}}/{{lab}}.elf
 
-hex lab="01-pixel":
+hex lab="01-first-pixel":
     xxd {{bindir}}/{{lab}}.bin
 
 # Cross-check: our ./asm must be byte-identical to the reference toolchain

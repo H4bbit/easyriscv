@@ -15,37 +15,47 @@ Prefer the browser? Read the [online book](https://h4bbit.github.io/easyriscv/) 
 
 ```bash
 just build             # build VM + assembler
-just run 01-pixel      # headless
-just debug 01-pixel    # ncurses: SPACE step, r run, g slow, R reset, q quit
+just run 01-first-pixel      # headless
+just debug 01-first-pixel    # ncurses: SPACE step, r run, g slow, R reset, q quit
 just clean             # remove artifacts
 ```
 
-## Labs
+## Labs (numbered 1:1 with book/ and solutions/)
 
-- `01-pixel` - first framebuffer draw (sb to 0x200, 1 byte/pixel)
-- `02-fib` - Fibonacci N=7 (branching)
-- `03-fib-ram` - Fibonacci vector in zero-page RAM 0x00
-- `04-branching` - countdown with bne
-- `05-memory` - lw/sw/sb/lbu
-- `06-stack` - manual sp push/pop
-- `07-jumping` - jal/jalr nested calls
-- `08-alu` - and/or/xor masking (random at 0xFE)
-- `09-snake` - Snake capstone (game loop, eat/grow, self/wall collision, game over)
+- `01-first-pixel` - first framebuffer draw (sb to 0x200, 1 byte/pixel)
+- `03-registers` - Fibonacci N=7 (branching)
+- `04-loop` - countdown with bne (labels + only bne)
+- `05-compares` - STUB (beq/blt/bge table)
+- `06-bytes-ram` - lw/sw/sb/lbu
+- `07-words-vectors` - Fibonacci vector in zero-page RAM 0x00
+- `08-dice` - random byte at 0xFE (mask only)
+- `09-logic` - and/or/xor masking (needs `08-dice` for `0xFE`)
+- `10-big-addresses` - STUB (lui, li unmasked, la)
+- `11-stack` - manual sp push/pop
+- `12-calls` - jal/jalr nested calls
+- `13-keys-print` - STUB (0xFF compares + 0x1000 store)
+- `14-snake` - Snake capstone (game loop, eat/grow, self/wall collision, game over)
 
-## Book
+## Book (1:1 with labs/)
 
-- `book/00-intro.md` - intro and lesson map
-- `book/01-numbers.md` - hex and immediates
-- `book/02-toolchain.md` - assembler + reference-toolchain inspection flow
-- `book/03-first-pixel.md` - first program
-- `book/04-registers.md` - register file
-- `book/05-branching.md` - branching
-- `book/06-memory.md` - memory
-- `book/07-stack.md` - stack
-- `book/08-jumping.md` - jumping
-- `book/10-io.md` - MMIO ports
-- `book/11-alu.md` - ALU (needs `10-io`)
-- `book/12-fib-ram.md` - Fibonacci vector in RAM
+- `book/00-welcome.md` - intro and lesson map
+- `book/01-first-pixel.md` - first program
+- `book/02-numbers.md` - hex and immediates
+- `book/03-registers.md` - register file
+- `book/04-loop.md` - loop (labels + only bne)
+- `book/05-compares.md` - STUB (compares table)
+- `book/06-bytes-ram.md` - bytes in RAM
+- `book/07-words-vectors.md` - Fibonacci vector in RAM
+- `book/08-dice.md` - random byte at 0xFE (mask only)
+- `book/09-logic.md` - ALU (needs `08-dice`)
+- `book/10-big-addresses.md` - STUB (lui, li unmasked, la)
+- `book/11-stack.md` - stack
+- `book/12-calls.md` - calls
+- `book/13-keys-print.md` - STUB (0xFF + 0x1000)
+- `book/14-snake.md` - capstone glossary (zero new instructions)
+- `book/A-toolchain.md` - assembler + reference-toolchain inspection flow
+- `book/B-pseudo-table.md` - STUB (canonical↔pseudo table)
+- `book/C-memmap.md` - STUB (memory map)
 
 ## Solutions
 
