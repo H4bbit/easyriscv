@@ -1,6 +1,7 @@
 # easyriscv (web)
 
 [![Open the book](https://img.shields.io/badge/ebook-open-brightgreen)](https://h4bbit.github.io/easyriscv/)
+[![Open the simulator](https://img.shields.io/badge/simulator-open-blue)](https://h4bbit.github.io/easyriscv/simulator.html)
 
 Bare-metal RV32I ebook in the browser, inspired by [easy6502](https://github.com/skilldrick/easy6502) (CC BY 4.0).
 
@@ -17,10 +18,15 @@ Open `index.html` (or the GitHub Pages URL once deployed). No toolchain, no
 server, no build step: each chapter's widget is an RV32I assembler and CPU
 in `riscv.js`. Click **Assemble**, then **Run**.
 
+For free play without the prose, open `simulator.html` (same widget with
+a lab picker instead of fixed chapter sources).
+
 ## Layout
 
 - `index.html` — the book: prose with one `.widget` per chapter, each
   prefilled with that lab's source (mirrors `main:labs/*/prog.s`)
+- `simulator.html` — standalone playground: same widget with a lab picker
+  (`labs.js`, generated from `main:labs/*/prog.s`), no prose
 - `riscv.js` — assembler + simulator (JS port of `main:vm.c`):
   4KB flat mem, code at `0x600`, zero-page RAM `0x00`, stack top `0x1FC`,
   framebuffer `0x200` (32x32, 16 colors), MMIO `0xFE` random /
