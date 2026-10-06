@@ -703,7 +703,8 @@ function RiscvWidget(node) {
     }
 
     function sanitize(line) {
-      var cut = line.replace(/\/\/.*$/, ''); // // comments
+      var cut = line.replace(/\/\/.*$/, ''); // // comments (legacy)
+      cut = cut.replace(/#.*$/, '');           // # comments (GNU/clang-common)
       cut = cut.replace(/;.*$/, '');         // ; comments
       return cut.replace(/^\s+/, '').replace(/\s+$/, '');
     }
