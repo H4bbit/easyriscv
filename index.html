@@ -180,8 +180,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p><code>addi t0, zero, 1</code> adds <code>1</code> to the always-zero
@@ -318,8 +322,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p><code>addi rd, rs, 0</code> copies <code>rs</code> to <code>rd</code>
@@ -365,12 +373,12 @@ needed &mdash; the branch does the compare itself. Other forms:
 .section .text
 .globl _start
 _start:
-    li t0, 8          # counter = 8 (like LDX #$08)
+    li t0, 8          # counter = 8
     li t1, 0x200      # framebuffer base
-    li t2, 3          # target = 3 (like CPX #$03)
+    li t2, 3          # target = 3
 
 loop:
-    addi t0, t0, -1       # DEX
+    addi t0, t0, -1       # count down
     sb   t0, 0(t1)        # write color at 0x200 - 1 byte/pixel
     bne  t0, t2, loop     # branch if !=
 
@@ -416,8 +424,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p>Step through it: <code>t0</code> goes <code>8&rarr;7&rarr;6&rarr;5&rarr;4&rarr;3</code>
@@ -458,7 +470,7 @@ with <code>base + 12-bit immediate</code>: <code>0(t0)</code> or
 .section .text
 .globl _start
 _start:
-    li t0, 0x000      # zero-page RAM base (like 6502 zero page)
+    li t0, 0x000      # zero-page RAM base (fast variables, game state)
     li t1, 42
     sw t1, 0(t0)      # absolute: sw t1, 0(t0)  -&gt; *0x000 = 42
     li t1, 99
@@ -523,8 +535,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p>Step and tick <strong>Monitor</strong> (start <code>0</code>, length
@@ -647,8 +663,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p>Pops come out in LIFO order: <code>33</code>, <code>22</code>,
@@ -684,11 +704,12 @@ loop halt.</li>
 <code>rd = pc+4; pc = rs1+offset &amp; ~1</code>.
 <code>jalr zero, 0(ra)</code> returns (<code>ret</code> pseudo).</li>
 </ul>
-<p>Unlike 6502 <code>JSR</code>/<code>RTS</code> &mdash; which push and pop
-the PC in hardware &mdash; <code>jal</code>/<code>jalr</code> never touch
-the stack: <code>ra</code> is just a register. For nested calls, save
-<code>ra</code> on the stack yourself, or the inner call overwrites it and
-the outer function can never return:</p>
+<p><code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).</p>
 <pre>outer:
     addi sp, sp, -4
     sw ra, 0(sp)
@@ -712,12 +733,12 @@ the outer function can never return:</p>
 .globl _start
 _start:
     li t0, 0
-    jal ra, inc_one   # JSR inc_one
+    jal ra, inc_one   # call: stores pc+4 in ra, jumps (no stack involved)
     # t0 should be 1 here
     li t1, 0x200
     sb t0, 0(t1)       # FB[0] = 1 (1 byte/pixel)
 
-    j after           # JMP (jal x0)
+    j after           # unconditional jump (jal x0: discards return address)
     li t0, 99         # skipped
 after:
     addi t0, t0, 4    # t0 = 5
@@ -731,7 +752,7 @@ after:
 
 inc_one:
     addi t0, t0, 1
-    jalr zero, 0(ra)  # RTS
+    jalr zero, 0(ra)  # return through ra
 
 outer:
     addi sp, sp, -4
@@ -781,8 +802,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p>This goes <code>0&rarr;1&rarr;5&rarr;15</code> with nested
@@ -887,8 +912,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <p><code>0xFE</code> is how games roll dice: mask it down
@@ -996,8 +1025,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <h3>Logic: AND / OR / XOR</h3>
@@ -1117,8 +1150,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <h3>Base + index&times;4</h3>
@@ -1164,13 +1201,13 @@ widget).</p>
     <input type="button" value="Disassemble" class="disassembleButton" />
     <input type="button" value="Notes" class="notesButton" />
   </div>
-  <textarea class="code" spellcheck="false"># Snake - Capstone game like easy6502 snake (bare-metal RISC-V)
+  <textarea class="code" spellcheck="false"># Snake - capstone game (bare-metal RISC-V)
 # Framebuffer 0x200 (32x32, 1 byte/pixel), random at 0xFE, key at 0xFF (WASD)
-# Game state in zero-page RAM at 0x00 (like the reference: code lives at
-# 0x600 above the screen, state below it, full 32x32 arena is playable).
+# Game state in zero-page RAM at 0x00: code lives at 0x600 above the screen,
+# state below it, so the full 32x32 arena is playable.
 # Layout: 0x00 DIR, 0x04 LEN (segment count), 0x08 APPLE (pixel addr),
 #         0x0C seg[0]=head, 0x10 seg[1], ... (one word per segment).
-# Directions use one bit each (like the reference): 1=up 2=right 4=down 8=left.
+# Directions use one bit each: 1=up 2=right 4=down 8=left.
 # Opposite pairs share one AND test: up|down, right|left.
 
 .equ FB,    0x200
@@ -1449,8 +1486,12 @@ $f Light grey.
 Stores to 0x1000 print the low byte as a character (print-char port).
 Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
 There are no syscalls here: ecall/ebreak exist in hardware but the
-lessons never use them. jal/jalr never touch the stack: ra is just
-a register, unlike 6502 JSR/RTS which push the PC in hardware.
+lessons never use them. <code>jal</code>/<code>jalr</code> never touch
+the stack: <code>ra</code> is just a register. A nested <code>jal</code>
+overwrites it, so a function that calls another must save <code>ra</code>
+first (for example with <code>sw ra, 0(sp)</code>) and restore it before
+returning &mdash; the save is your code&rsquo;s own convention, and removing
+it breaks the outer return (try it in the Jumping chapter below).
   </div>
 </div>
 <h3>Overall structure</h3>
@@ -1512,7 +1553,7 @@ lives far away at <code>0x600</code>.</p>
 <section id="asm">
 <h2>Assembler notes</h2>
 <ul>
-<li>Two passes, like the easy6502 assembler: <code>define</code>/<code>.equ</code>,
+<li>Two passes (<code>define</code>/<code>.equ</code>,
 labels, then code at <code>0x600</code>. Fixed 32-bit words, so every
 instruction is 4 bytes except <code>li</code> with a large immediate
 (<code>lui + addi</code>, 8 bytes).</li>
