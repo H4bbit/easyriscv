@@ -13,11 +13,11 @@ cc := env_var_or_default("CC", "clang")
 cflags := env_var_or_default("CFLAGS", "-std=c23 -O2 -Wall -Wextra -Wpedantic -Wshadow -Wundef -Werror=implicit-function-declaration -Werror=return-type -fdiagnostics-color=always -I.")
 # Reference RISC-V toolchain (ground truth for disasm/elf/check-asm):
 # default clang+llvm, swappable for future gcc testing, e.g.
-# RISCV_CC=riscv64-unknown-elf-gcc RISCV_FLAGS="-march=rv32i -mabi=ilp32 -nostdlib -Wl,-Ttext=0x600"
+# RISCV_CC=riscv64-unknown-elf-gcc RISCV_FLAGS="-march=rv32i -mabi=ilp32 -nostdlib -Wl,-T,riscv.ld"
 #   OBJCOPY=riscv64-unknown-elf-objcopy OBJDUMP=riscv64-unknown-elf-objdump READELF=riscv64-unknown-elf-readelf
 # (untested path — clang output is the current source of truth).
 riscv_cc := env_var_or_default("RISCV_CC", "clang")
-riscv_flags := env_var_or_default("RISCV_FLAGS", "--target=riscv32 -march=rv32i -nostdlib -Wl,-Ttext=0x600,--image-base=0x600")
+riscv_flags := env_var_or_default("RISCV_FLAGS", "--target=riscv32 -march=rv32i -nostdlib -Wl,-T,riscv.ld")
 objcopy := env_var_or_default("OBJCOPY", "llvm-objcopy")
 objdump := env_var_or_default("OBJDUMP", "llvm-objdump")
 readelf := env_var_or_default("READELF", "llvm-readelf")
