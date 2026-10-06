@@ -11,8 +11,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
+          # C23 (constexpr) needs clang >= 19; ubuntu noble ships 18.
+          # Same major as local dev (21.1.8) via apt.llvm.org.
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update -q
-          sudo apt-get install -y -q clang llvm just libncursesw6 libncurses-dev
+          sudo apt-get install -y -q clang-21 llvm-21-tools just libncursesw6 libncurses-dev
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100
+          for t in objcopy objdump readelf; do
+            b="$(command -v llvm-$t-21 || ls /usr/lib/llvm-21/bin/llvm-$t 2>/dev/null | head -1)"
+            sudo update-alternatives --install /usr/bin/llvm-$t llvm-$t "$b" 100
+          done
       - name: Build VM
         run: just build
       - name: Cross-check assembler (./asm vs clang, labs+solutions)
