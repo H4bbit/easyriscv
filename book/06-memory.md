@@ -1,6 +1,9 @@
 # Memory
 
-RISC-V uses a simple load/store model.
+RISC-V uses a simple load/store model: arithmetic never touches memory.
+Only loads and stores move data between registers and RAM — every access
+is `base + 12-bit immediate` (`0(t0)`, `4(t0)`, `12(t0)`). For indexing,
+compute the address first: `add t3, t0, t2; sw t1, 0(t3)`.
 
 Run:
 
@@ -23,7 +26,9 @@ Source (`labs/05-memory/prog.s`):
 
 ## Load/Store Only
 
-Every memory access is a `lw`/`sw` (or `lh`/`lb`/`lbu`/`sh`/`sb`) with `base + 12-bit immediate`: `0(t0)` or `4(t0)`. For indexing, compute the address first: `add t3, t0, t2; sw t1, 0(t3)`.
+The canonical forms are `lw` (load word) and `sw` (store word): 4 bytes
+at a time, address = register + 12-bit offset. Narrower widths reuse the
+same shape with their own funct3:
 
 * `lw`/`sw` — word (4 bytes)
 * `lh`/`lhu` — halfword (2 bytes)
@@ -32,9 +37,23 @@ Every memory access is a `lw`/`sw` (or `lh`/`lb`/`lbu`/`sh`/`sb`) with `base + 1
 
 Our memory is `0x000-0xFFF`: `0x000` zero-page RAM, `0x100-0x1FF` stack (top `0x1FC`, grows down), `0x200-0x5FF` framebuffer, `0x600` code.
 
+`just disasm 05-memory` is the proof: every source line folds to one
+encoding, printed with objdump's names — `li t1, 42` at `0x604` is
+`addi`, `lbu s1, 12(t0)` at `0x640` is the `lbu` funct3 (`00c2c483`
+vs the `lw` funct3 `0002ae83` at `0x624`). No spelling hides a second
+instruction.
+
 ## Try It
 
 Step and watch `w_mem` hexdump at `0x00`: `42 99 77 171`. The framebuffer at `0x200` shows `13 11` (`141 & 0xF`, `0xAB & 0xF`).
+
+## Translation exercise
+
+Translate both ways and confirm `disasm` does not change: `lw t4, 0(t0)`
+loads 4 bytes — spell the 1-byte version (`lb`/`lbu t4, 12(t0)`) and watch
+only the funct3 field move; `lbu s1, 12(t0)` ↔ `lb s1, 12(t0)` differ
+only in sign- vs zero-extension of the same byte `0xAB` (exercise 1
+shows the words `4294967211` vs `171`).
 
 ## Exercises
 

@@ -38,6 +38,7 @@ just clean             # remove artifacts
 | `10-io` | `10-io` | MMIO ports (`0xFE` random, `0xFF` key, `0x1000` print) |
 | `08-alu` | `11-alu` | `and`/`or`/`xor`, shifts, `sub`/`slt` (needs `10-io` for `0xFE`) |
 | `03-fib-ram` | `12-fib-ram` | vector in zero-page RAM `0x00` (`slli` index×4) |
+| `09-snake` | `09-snake` | capstone glossary: every pattern reviewed in the game |
 
 Capstone: `09-snake` (game loop, `WASD` at `0xFF`, apple at random,
 state in zero-page `0x00`, full 32x32 arena playable).

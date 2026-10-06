@@ -28,7 +28,8 @@ Run:
 just debug 03-fib-ram
 ```
 
-Source (`labs/03-fib-ram/prog.s`):
+Source (`labs/03-fib-ram/prog.s`) — canonical `add`/`slli` for the math,
+`mv` shorthand for the copies:
 
 ```asm
     li s0, 0x00       # zero-page RAM base (code lives at 0x600, far away)
@@ -41,6 +42,10 @@ loop:
     sw   t3, 0(t5)    # RAM[s0 + counter*4] = t3
     blt  t2, a0, loop
 ```
+
+Each `mv t0, t1` in the loop is the assembler writing `addi t0, t1, 0`
+for you — the copy you learned in [04-registers](04-registers.md), reused
+three times per iteration (`mv t0, t1` / `mv t1, t3` / `mv a0, t1`).
 
 ## Base + index×4
 
@@ -60,6 +65,20 @@ dodge the code; that architectural mistake is fixed)..
 Step and watch `w_mem` / headless `RAM 0x00`: `0 1 1 2 3 5 8 13`.
 Each loop iteration appends one word. Final `a0=13`, same as `02-fib` —
 the value is identical, the storage is new.
+
+`just disasm 03-fib-ram` is the proof: `mv t0, t1` at `0x628` prints as
+`mv` (`00030293`) — one `addi` with immediate `0`. Same for the branch
+shorthand: `beq a0, zero, done` at `0x610` prints `beqz` (`02050c63`),
+the canonical `beq a0, t2, ready` at `0x620` keeps both registers
+(`02750263`). Both spellings, one encoding each.
+
+## Translation exercise
+
+Translate both ways and confirm `disasm` does not change: `mv t0, t1` ↔
+`addi t0, t1, 0`; `beq a0, zero, done` ↔ `beqz a0, done`; `j done` ↔
+`jal x0, done`. (Exercise 2's `sb`/`add`-without-scale is the byte-width
+counterpart of this word-width loop — compare the two `disasm` outputs
+field by field.)
 
 ## Exercises
 
