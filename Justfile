@@ -95,10 +95,12 @@ check-asm:
     [ -x ./asm ] || just build
     fail=0
     for src in labs/*/prog.s solutions/*/*.s; do \
-      {{riscv_cc}} {{riscv_flags}} -o "{{bindir}}/ref.elf" "$src" 2>/dev/null; \
+      if ! {{riscv_cc}} {{riscv_flags}} -o "{{bindir}}/ref.elf" "$src" 2>"{{bindir}}/ref.err"; then \
+        echo "LINKFAIL $src"; sed 's/^/  /' "{{bindir}}/ref.err"; fail=1; continue; \
+      fi; \
       {{objcopy}} -O binary --only-section=.text "{{bindir}}/ref.elf" "{{bindir}}/ref.bin"; \
       ./asm "$src" "{{bindir}}/my.bin"; \
       cmp -s "{{bindir}}/ref.bin" "{{bindir}}/my.bin" || { echo "DIFF $src"; fail=1; }; \
     done
-    rm -f "{{bindir}}/ref.elf" "{{bindir}}/ref.bin" "{{bindir}}/my.bin"
+    rm -f "{{bindir}}/ref.elf" "{{bindir}}/ref.bin" "{{bindir}}/my.bin" "{{bindir}}/ref.err"
     [ "$fail" = 0 ] && echo "check-asm: all labs+solutions byte-identical" || exit 1
