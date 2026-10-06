@@ -64,6 +64,7 @@ int main(int argc, char **argv){
         int cmd = ui_handle_input();
         // feed last key to $FF (polled by interactive programs like Snake)
         if(cmd >= 32 && cmd < 127) cpu.last_key = (uint8_t)cmd;
+        if(cmd==5) continue; // nop: tecla irreconhecida, sem step
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
         if(cmd==1){ // run until halt

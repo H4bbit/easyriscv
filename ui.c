@@ -6,6 +6,10 @@ void ui_init(UI *ui){
     initscr();
     cbreak(); noecho(); keypad(stdscr, TRUE);
     nodelay(stdscr, FALSE);
+    // Consome cliques como KEY_MOUSE (1 evento) em vez de N bytes ANSI:
+    // sem isso cada byte do clique (\x1b [ M ...) virava um getch()
+    // separado — e o \x1b ainda caia no caso quit. Clique nao faz nada.
+    mousemask(ALL_MOUSE_EVENTS, nullptr);
     curs_set(0);
     if(has_colors()){
         start_color();
@@ -166,5 +170,8 @@ int ui_handle_input(void){
     if(ch=='g') return 4;
     if(ch=='R') return 2;
     if(ch=='q' || ch==27) return 3;
-    return 0;
+    if(ch==KEY_MOUSE){ MEVENT ev; (void)getmouse(&ev); return 5; }
+    // Tecla irreconhecida (setas, F-keys, WASD fora do snake...): NOP.
+    // Antes retornava 0 e o main dava step — qualquer tecla avancava.
+    return 5;
 }
