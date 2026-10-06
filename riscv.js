@@ -428,10 +428,23 @@ function RiscvWidget(node) {
       if (opcode === 0x6f) {
         var jimm = (((instr >> 31) & 1) << 20) | (((instr >> 12) & 0xff) << 12) |
           (((instr >> 20) & 1) << 11) | (((instr >> 21) & 0x3ff) << 1);
-        return 'jal     ' + regNames[rd] + ',' + hx(addr + signExtend(jimm, 21));
+        var jtgt = hx(addr + signExtend(jimm, 21));
+        if (rd === 0) return 'j       ' + jtgt;
+        if (rd === 1) return 'jal     ' + jtgt;
+        return 'jal     ' + regNames[rd] + ',' + jtgt;
       }
       if (opcode === 0x67) {
-        return 'jalr    ' + regNames[rd] + ',' + signExtend(instr >>> 20, 12) + '(' + regNames[rs1] + ')';
+        var rimm = signExtend(instr >>> 20, 12);
+        if (rd === 0 && rs1 === 1 && rimm === 0) return 'ret';
+        if (rd === 0) {
+          if (rimm === 0) return 'jr      ' + regNames[rs1];
+          return 'jr      ' + rimm + '(' + regNames[rs1] + ')';
+        }
+        if (rd === 1) {
+          if (rimm === 0) return 'jalr    ' + regNames[rs1];
+          return 'jalr    ' + rimm + '(' + regNames[rs1] + ')';
+        }
+        return 'jalr    ' + regNames[rd] + ',' + rimm + '(' + regNames[rs1] + ')';
       }
       if (opcode === 0x63) {
         var bimm = (((instr >> 31) & 1) << 12) | (((instr >> 7) & 1) << 11) |
@@ -441,6 +454,10 @@ function RiscvWidget(node) {
           funct3 === 5 ? 'bge' : funct3 === 6 ? 'bltu' : funct3 === 7 ? 'bgeu' : 'b??';
         if (funct3 === 0 && rs2 === 0) return 'beqz    ' + regNames[rs1] + ',' + tgt;
         if (funct3 === 1 && rs2 === 0) return 'bnez    ' + regNames[rs1] + ',' + tgt;
+        if (funct3 === 5 && rs1 === 0) return 'blez    ' + regNames[rs2] + ',' + tgt;
+        if (funct3 === 5 && rs2 === 0) return 'bgez    ' + regNames[rs1] + ',' + tgt;
+        if (funct3 === 4 && rs2 === 0) return 'bltz    ' + regNames[rs1] + ',' + tgt;
+        if (funct3 === 4 && rs1 === 0) return 'bgtz    ' + regNames[rs2] + ',' + tgt;
         return (mn + '     ').slice(0, 8) + regNames[rs1] + ',' + regNames[rs2] + ',' + tgt;
       }
       if (opcode === 0x03) {
@@ -458,6 +475,7 @@ function RiscvWidget(node) {
         var oimm = signExtend(instr >>> 20, 12);
         var sh = (instr >> 20) & 0x1f;
         if (funct3 === 0) {
+          if (rd === 0 && rs1 === 0 && oimm === 0) return 'nop';
           if (rs1 === 0) return 'li      ' + regNames[rd] + ',' + oimm;
           if (oimm === 0) return 'mv      ' + regNames[rd] + ',' + regNames[rs1];
           return 'addi    ' + regNames[rd] + ',' + regNames[rs1] + ',' + oimm;
@@ -470,6 +488,8 @@ function RiscvWidget(node) {
         }
         var imn = funct3 === 2 ? 'slti' : funct3 === 3 ? 'sltiu' : funct3 === 4 ? 'xori' :
           funct3 === 6 ? 'ori' : funct3 === 7 ? 'andi' : 'op-imm';
+        if (funct3 === 4 && oimm === -1) return 'not     ' + regNames[rd] + ',' + regNames[rs1];
+        if (funct3 === 3 && oimm === 1) return 'seqz    ' + regNames[rd] + ',' + regNames[rs1];
         return (imn + '       ').slice(0, 8) + regNames[rd] + ',' + regNames[rs1] + ',' + oimm;
       }
       if (opcode === 0x33) {
@@ -477,6 +497,10 @@ function RiscvWidget(node) {
           funct3 === 1 ? 'sll' : funct3 === 2 ? 'slt' : funct3 === 3 ? 'sltu' :
           funct3 === 4 ? 'xor' : funct3 === 5 && funct7 === 0 ? 'srl' :
           funct3 === 5 ? 'sra' : funct3 === 6 ? 'or' : funct3 === 7 ? 'and' : 'op';
+        if (funct3 === 0 && funct7 === 0x20 && rs1 === 0) return 'neg     ' + regNames[rd] + ',' + regNames[rs2];
+        if (funct3 === 3 && funct7 === 0 && rs1 === 0) return 'snez    ' + regNames[rd] + ',' + regNames[rs2];
+        if (funct3 === 2 && funct7 === 0 && rs2 === 0) return 'sltz    ' + regNames[rd] + ',' + regNames[rs1];
+        if (funct3 === 2 && funct7 === 0 && rs1 === 0) return 'sgtz    ' + regNames[rd] + ',' + regNames[rs2];
         return (rmn + '       ').slice(0, 8) + regNames[rd] + ',' + regNames[rs1] + ',' + regNames[rs2];
       }
       if (opcode === 0x73) {
