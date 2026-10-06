@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyRISC-V Simulator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrapper">
+<header>
+<h1>EasyRISC-V Simulator</h1>
+<p>Bare-metal RV32I playground: pick a lab, click <strong>Assemble</strong>,
+then <strong>Run</strong>. No toolchain, no server &mdash; the assembler and
+CPU live in <code>riscv.js</code>. Prefer the guided tour? Read
+<a href="index.html">the book</a>.</p>
+<p><strong>Scope:</strong> RV32I base integer instruction set only &mdash;
+no M/A/F/D/C extensions, no privileged ISA, no CSRs.</p>
+</header>
+<div class="widget">
+  <div class="labPicker">
+    <label for="labSelect">Lab:</label>
+    <select id="labSelect" class="labSelect">
+    <option value="01-pixel" selected>01-pixel</option>
+    <option value="02-fib">02-fib</option>
+    <option value="03-fib-ram">03-fib-ram</option>
+    <option value="04-branching">04-branching</option>
+    <option value="05-memory">05-memory</option>
+    <option value="06-stack">06-stack</option>
+    <option value="07-jumping">07-jumping</option>
+    <option value="08-alu">08-alu</option>
+    <option value="09-snake">09-snake</option>
+    <option value="10-io">10-io</option>
+    </select>
+  </div>
+  <div class="buttons">
+    <input type="button" value="Assemble" class="assembleButton" />
+    <input type="button" value="Run" class="runButton" />
+    <input type="button" value="Reset" class="resetButton" />
+    <input type="button" value="Hexdump" class="hexdumpButton" />
+    <input type="button" value="Disassemble" class="disassembleButton" />
+    <input type="button" value="Notes" class="notesButton" />
+  </div>
+  <textarea class="code" spellcheck="false"># First program - load immediates and store bytes to the framebuffer
+# Draws 3 pixels on the 32x32 framebuffer at 0x200 (1 byte/pixel)
+# Step 1 is canonical (addi, jal x0), step 2 is the shorthand (li, j, nop).
+.section .text
+.globl _start
+_start:
+    addi t0, zero, 1      # canonical: t0 = 1 (see li below)
+    addi t1, zero, 0x200 # canonical: t1 = 0x200
+    sb t0, 0(t1)      # pixel (0,0) - 1 byte per pixel
+    li t0, 5          # shorthand for addi t0, zero, 5: green
+    sb t0, 1(t1)      # pixel (1,0)
+    li t0, 8          # shorthand for addi t0, zero, 8: orange
+    sb t0, 2(t1)      # pixel (2,0)
+    nop               # shorthand for addi x0, x0, 0: one quiet cycle
+    jal x0, .         # halt: jump to self (j . is shorthand)</textarea>
+  <canvas class="screen" width="160" height="160"></canvas>
+  <div class="debugger">
+    <input type="checkbox" class="debug" name="debug" />
+    <label>Debugger</label>
+    <div class="minidebugger"></div>
+    <div class="buttons">
+      <input type="button" value="Step" class="stepButton" />
+      <input type="button" value="Jump to..." class="gotoButton" />
+    </div>
+  </div>
+  <div class="monitorControls">
+    <label>Monitor</label>
+    <input type="checkbox" class="monitoring" name="monitoring" />
+    <label>Start: $</label>
+    <input type="text" value="0" class="start" name="start" />
+    <label>Length: $</label>
+    <input type="text" value="ff" class="length" name="length" />
+  </div>
+  <div class="monitor"><pre><code></code></pre></div>
+  <div class="messages"><pre><code></code></pre></div>
+  <div class="notes" style="display: none">Notes:
+
+Address 0xFE reads a new random byte on every load (lbu + andi mask).
+Address 0xFF reads the ASCII code of the last key pressed (0 = none).
+
+Addresses 0x200 to 0x5FF map to the 32x32 screen pixels (1 byte/pixel).
+Only the low nibble shows: colours are $0 Black, $1 White, $2 Red,
+$3 Cyan, $4 Purple, $5 Green, $6 Blue, $7 Yellow, $8 Orange, $9 Brown,
+$a Light red, $b Dark grey, $c Grey, $d Light green, $e Light blue,
+$f Light grey.
+
+Stores to 0x1000 print the low byte as a character (print-char port).
+Code lives at 0x600. Halt is a jump to self: j . (jal x0, 0).
+There are no syscalls here: ecall/ebreak exist in hardware but the
+lessons never use them.
+  </div>
+</div>
+<footer>
+<p><small>EasyRISC-V &mdash; lab sources live in
+<a href="https://github.com/H4bbit/easyriscv/tree/main/labs"><code>main:labs/</code></a>,
+book prose in <a href="index.html">index.html</a>.</small></p>
+</footer>
+</div>
+<script src="labs.js"></script>
+<script src="riscv.js"></script>
+</body>
+</html>
