@@ -963,7 +963,7 @@ function RiscvWidget(node) {
       if (op === 'seqz' || op === 'snez' || op === 'sltz' || op === 'sgtz') {
         if (!need(2) || R2() < 0 || R1() < 0) return false;
         if (op === 'seqz') emit(encI(1, R1(), 3, R2(), 0x13));
-        else if (op === 'snez') emit(encR(0, 0, R1(), 3, R2(), 0x33));
+        else if (op === 'snez') emit(encR(0, R1(), 0, 3, R2(), 0x33));
         else if (op === 'sltz') emit(encR(0, 0, R1(), 2, R2(), 0x33));
         else emit(encR(0, R1(), 0, 2, R2(), 0x33));
         return true;
