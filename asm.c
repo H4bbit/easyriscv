@@ -678,7 +678,7 @@ static void assemble_line(char *rest, uint32_t addr, int lineno) {
         if (rd < 0 || rs1 < 0) fail(lineno, "bad %s args", op);
         if (strcmp(op, "seqz") == 0) emit(encI(1, (uint32_t)rs1, 3, (uint32_t)rd, 0x13));
         else if (strcmp(op, "snez") == 0)
-            emit(encR(0, 0, (uint32_t)rs1, 3, (uint32_t)rd, 0x33));
+            emit(encR(0, (uint32_t)rs1, 0, 3, (uint32_t)rd, 0x33));
         else if (strcmp(op, "sltz") == 0)
             emit(encR(0, 0, (uint32_t)rs1, 2, (uint32_t)rd, 0x33));
         else emit(encR(0, (uint32_t)rs1, 0, 2, (uint32_t)rd, 0x33));
