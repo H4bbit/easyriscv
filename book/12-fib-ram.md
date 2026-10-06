@@ -10,13 +10,13 @@ into a vector, the pattern every array program reuses.
 
 ```asm
     li a0, 7
-    li t0, 0          // F(0)
-    li t1, 1          // F(1)
+    li t0, 0          # F(0)
+    li t1, 1          # F(1)
 loop:
     add t3, t0, t1
     mv  t0, t1
     mv  t1, t3
-    blt t2, a0, loop  // until counter == 7
+    blt t2, a0, loop  # until counter == 7
 ```
 
 Result `a0=13`, nothing in RAM. If you haven't traced it in
@@ -31,14 +31,14 @@ just debug 03-fib-ram
 Source (`labs/03-fib-ram/prog.s`):
 
 ```asm
-    li s0, 0x00       // zero-page RAM base (code lives at 0x600, far away)
-    sw t0, 0(s0)      // RAM[0x00] = 0
-    sw t1, 4(s0)      // RAM[0x004] = 1
+    li s0, 0x00       # zero-page RAM base (code lives at 0x600, far away)
+    sw t0, 0(s0)      # RAM[0x00] = 0
+    sw t1, 4(s0)      # RAM[0x004] = 1
 loop:
     add t3, t0, t1
-    slli t4, t2, 2    // counter * 4 (words are 4 bytes)
+    slli t4, t2, 2    # counter * 4 (words are 4 bytes)
     add  t5, s0, t4
-    sw   t3, 0(t5)    // RAM[s0 + counter*4] = t3
+    sw   t3, 0(t5)    # RAM[s0 + counter*4] = t3
     blt  t2, a0, loop
 ```
 

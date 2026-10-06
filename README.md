@@ -9,6 +9,7 @@ Prefer the browser? Read the [online book](https://h4bbit.github.io/easyriscv/) 
 - RV32I VM in C with ncurses debugger (no stdlib, no syscalls — bare metal, MMIO only)
 - 4KB flat memory, framebuffer at 0x200 (32x32, 16 colors), MMIO at 0xFE/0xFF compat
 - Own assembler in C (`asm.c`, byte-identical to the reference toolchain — `just check-asm` proves it)
+- Toolchain-agnostic sources (`#` comments assemble under both clang and GNU `as`)
 
 ## Quick start
 
@@ -55,12 +56,13 @@ just clean             # remove artifacts
 ## Requires
 
 - C23 (`-std=c23`): `constexpr`, `auto`, `nullptr`, `static_assert`,
-  typed `enum`, `[[nodiscard]]` — tested with Clang 21 only so far;
-  `CC=`/`CFLAGS=` overrides are ready for future compiler testing
-  (please report breakage)
+  typed `enum`, `[[nodiscard]]` — CI builds clean under Clang 21
+  (reference toolchain) and GCC 14 (portability job);
+  `CC=`/`CFLAGS=` overrides select the host compiler
 - ncurses with wide-char support (`ncursesw`, ABI 6): the debugger uses
   `waddstr` with `▀` half-blocks and 16 color pairs
-- Reference RISC-V toolchain for inspection/cross-check only (clang+llvm by default:
+- Reference RISC-V toolchain for inspection/cross-check (clang+llvm by default:
   `clang --target=riscv32`, `llvm-objcopy`, `llvm-objdump`, `llvm-readelf` —
   `just disasm/elf/hex/check-asm`; `RISCV_CC`/`RISCV_FLAGS`/`OBJCOPY`/`OBJDUMP`/
-  `READELF` overrides ready for future toolchain testing) and `just` as task runner
+  `READELF` overrides pick another, e.g. GNU `riscv64-unknown-elf-*` as the
+  CI gcc-14 job does) and `just` as task runner

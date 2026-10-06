@@ -38,13 +38,13 @@ just debug 02-fib
 `02-fib` computes Fibonacci(7) = 13 with a counted loop — canonical copies first, shorthand after:
 
 ```asm
-    li a0, 7          // N = 7
-    li t0, 0          // F(0)
-    li t1, 1          // F(1)
+    li a0, 7          # N = 7
+    li t0, 0          # F(0)
+    li t1, 1          # F(1)
 loop:
-    add t3, t0, t1    // 3-operand: t3 = t0 + t1
-    addi t0, t1, 0    // canonical copy: t0 = t1 + 0
-    addi t1, t3, 0    // canonical copy: t1 = t3 + 0
+    add t3, t0, t1    # 3-operand: t3 = t0 + t1
+    addi t0, t1, 0    # canonical copy: t0 = t1 + 0
+    addi t1, t3, 0    # canonical copy: t1 = t3 + 0
     blt t2, a0, loop
 ```
 

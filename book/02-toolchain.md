@@ -11,9 +11,9 @@ just build          # cc -std=c23 → vm + asm
 `just build` compiles `vm.c/ui.c/main.c` (`vm`) and `asm.c` (`asm`)
 with `-std=c23` (C23: `constexpr`, `auto`, `nullptr`, `static_assert`)
 — the VM links `ncursesw` (wide-char ABI 6: `▀` half-blocks,
-16 color pairs). The default is clang (only toolchain tested here);
-`CC=`/`CFLAGS=` overrides exist for future compiler testing
-(e.g. `CC=gcc just build` — untested path, please report breakage).
+16 color pairs). The default host compiler is clang (reference); `CC=`
+selects another — CI builds clean under both Clang 21 and GCC 14
+(`CC=gcc-14 just build`).
 No clang-only flags in the default `cflags` on purpose.
 
 ## Assemble
@@ -27,7 +27,11 @@ Assembler on the web branch), emitting a flat `.bin` the VM loads at
 `0x600`. It is byte-identical to the reference toolchain output for
 all labs and solutions (`just check-asm` proves it; the reference is
 clang by default, swappable via `RISCV_CC`/`RISCV_FLAGS`/
-`OBJCOPY`/`OBJDUMP`/`READELF` for future testing).
+`OBJCOPY`/`OBJDUMP`/`READELF` — e.g. GNU `riscv64-unknown-elf-*`, as
+the CI gcc-14 job uses).
+
+Sources are toolchain-agnostic: comments use `#` (accepted by both
+clang and GNU `as`; `./asm` and `riscv.js` also accept legacy `//`).
 
 The reference toolchain stays as independent ground truth for
 inspection only:

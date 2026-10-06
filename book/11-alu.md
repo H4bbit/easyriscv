@@ -11,7 +11,7 @@ Open `labs/08-alu/prog.s`: the first instruction reads the random port:
 
 ```asm
     li t0, 0xFE
-    lbu t1, 0(t0)      // random 0-255
+    lbu t1, 0(t0)      # random 0-255
 ```
 
 If you haven't read [10-io.md](10-io.md), do that first — `0xFE`
@@ -27,14 +27,14 @@ just debug 08-alu
 Source (`labs/08-alu/prog.s`):
 
 ```asm
-    lbu t1, 0(t0)      // random 0-255
-    andi t1, t1, 0x03  // mask low 2 bits -> 0-3
-    addi t1, t1, 2     // 2-5
-    sb t1, 0(t2)       // FB[0] = 2-5
-    or t5, t3, t4      // 0x0A | 0x05 = 15
-    sb t5, 1(t2)       // FB[1] = 15
+    lbu t1, 0(t0)      # random 0-255
+    andi t1, t1, 0x03  # mask low 2 bits -> 0-3
+    addi t1, t1, 2     # 2-5
+    sb t1, 0(t2)       # FB[0] = 2-5
+    or t5, t3, t4      # 0x0A | 0x05 = 15
+    sb t5, 1(t2)       # FB[1] = 15
     xori t6, t6, 0x0F
-    sb t6, 2(t2)       // FB[2] = 0
+    sb t6, 2(t2)       # FB[2] = 0
 ```
 
 ## Logic: AND / OR / XOR

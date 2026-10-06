@@ -12,13 +12,13 @@ Source (`labs/05-memory/prog.s`):
 
 ```asm
     li t0, 0x00
-    sw t1, 0(t0)      // *0x00 = 42
-    sw t1, 4(t0)      // *0x004 = 99
+    sw t1, 0(t0)      # *0x00 = 42
+    sw t1, 4(t0)      # *0x004 = 99
     add t3, t0, t2
-    sw t1, 0(t3)      // *0x008 = 77 (base+offset)
-    lw t4, 0(t0)      // load word
-    sb t1, 12(t0)     // byte store
-    lbu s1, 12(t0)    // byte load unsigned
+    sw t1, 0(t3)      # *0x008 = 77 (base+offset)
+    lw t4, 0(t0)      # load word
+    sb t1, 12(t0)     # byte store
+    lbu s1, 12(t0)    # byte load unsigned
 ```
 
 ## Load/Store Only

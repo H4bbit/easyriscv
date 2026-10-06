@@ -11,10 +11,10 @@ just debug 07-jumping
 Source (`labs/07-jumping/prog.s`):
 
 ```asm
-    jal ra, inc_one   // call
-    j after           // unconditional jump (jal x0)
+    jal ra, inc_one   # call
+    j after           # unconditional jump (jal x0)
 after:
-    jalr zero, 0(ra)  // return
+    jalr zero, 0(ra)  # return
 ```
 
 * `jal rd, label` — `rd = pc+4; pc = label`. `jal ra, func` calls a function, `jal x0, label` is an unconditional jump (`j`), `jal x0, 0` is an infinite loop halt.

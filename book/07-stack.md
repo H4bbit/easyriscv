@@ -13,8 +13,8 @@ Source (`labs/06-stack/prog.s`):
 ```asm
     li sp, 0x1FC
     addi sp, sp, -4
-    sw t0, 0(sp)   // push 11
-    lw t0, 0(sp)   // pop
+    sw t0, 0(sp)   # push 11
+    lw t0, 0(sp)   # pop
     addi sp, sp, 4
 ```
 

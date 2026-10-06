@@ -16,10 +16,10 @@ Source (`labs/04-branching/prog.s`):
     li t2, 3
 loop:
     addi t0, t0, -1
-    sb   t0, 0(t1)       // 1 byte/pixel at 0x200
-    bne  t0, t2, loop   // branch if t0 != t2
-    sb   t0, 1(t1)       // final value at next pixel
-    j    .               // halt
+    sb   t0, 0(t1)       # 1 byte/pixel at 0x200
+    bne  t0, t2, loop   # branch if t0 != t2
+    sb   t0, 1(t1)       # final value at next pixel
+    j    .               # halt
 ```
 
 ## How Branches Work
