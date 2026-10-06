@@ -397,12 +397,6 @@ function RiscvWidget(node) {
           else if (funct3 === 7) { if (rd !== 0) regs[rd] = u32(regs[rs1] & regs[rs2]); }
           break;
         }
-        case 0x73: { // SYSTEM: ecall print-char is a dead path (MMIO-only); sret NOP
-          if (instr === 0x00000073 && regs[17] === 1) {
-            putc(String.fromCharCode(regs[10] & 0xff));
-          }
-          break;
-        }
         default: break;
       }
       regs[0] = 0;
@@ -502,11 +496,6 @@ function RiscvWidget(node) {
         if (funct3 === 2 && funct7 === 0 && rs2 === 0) return 'sltz    ' + regNames[rd] + ',' + regNames[rs1];
         if (funct3 === 2 && funct7 === 0 && rs1 === 0) return 'sgtz    ' + regNames[rd] + ',' + regNames[rs2];
         return (rmn + '       ').slice(0, 8) + regNames[rd] + ',' + regNames[rs1] + ',' + regNames[rs2];
-      }
-      if (opcode === 0x73) {
-        if (instr === 0x00000073) return 'ecall';
-        if (instr === 0x10200073) return 'sret';
-        return 'system  ' + hx(instr);
       }
       return 'unknown ' + hx(instr);
     }
@@ -1189,11 +1178,6 @@ function RiscvWidget(node) {
         var uv = num(argv[1], symbols);
         if (ud < 0 || uv === null || uv < 0 || uv > 0xfffff) return false;
         emit(encU(uv, ud, op === 'lui' ? 0x37 : 0x17));
-        return true;
-      }
-      if (op === 'ecall' || op === 'ebreak') {
-        if (argv.length > 0) return false;
-        emit(op === 'ecall' ? 0x00000073 : 0x00100073);
         return true;
       }
       return false;
