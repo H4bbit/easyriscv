@@ -55,6 +55,7 @@ int main(int argc, char **argv){
     UI ui;
     ui_init(&ui);
     while(1){
+        (void)ui_check_resize(&ui); // drift guard: relayout even if KEY_RESIZE was lost
         ui_draw(&ui,&cpu);
         if(cpu.halted){
             // pisca halt
@@ -64,6 +65,7 @@ int main(int argc, char **argv){
         int cmd = ui_handle_input();
         // feed last key to $FF (polled by interactive programs like Snake)
         if(cmd >= 32 && cmd < 127) cpu.last_key = (uint8_t)cmd;
+        if(cmd==6){ erase(); ui_layout(&ui); continue; } // resize event: clear, relayout, no step
         if(cmd==5) continue; // nop: unknown key, no step
         if(cmd==3) break;
         if(cmd==2){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); continue; }
@@ -73,26 +75,30 @@ int main(int argc, char **argv){
                 if(!cpu_step(&cpu)) break;
                 // throttling
                 if((cpu.pc & 0x3F)==0){
+                    if(ui_check_resize(&ui)) { ui_draw(&ui,&cpu); continue; } // resize mid-run: relayout, keep running
                     ui_draw(&ui,&cpu);
                     int ch=getch();
+                    if(ch==KEY_RESIZE){ erase(); ui_layout(&ui); continue; } // same, via event
                     if(ch=='q' || ch==' ') break;
                     if(ch=='R'){ cpu_reset(&cpu); (void)cpu_load_bin(&cpu,bin); break; }
                     { struct timespec ts = {0, 10000 * 1000}; nanosleep(&ts, nullptr); }
                 }
             }
-            nodelay(stdscr, FALSE);
+            timeout(500);
             continue;
         }
         if(cmd==4){ // run slow (spin)
             nodelay(stdscr, TRUE);
             for(int i=0;i<200 && !cpu.halted;i++){
                 (void)cpu_step(&cpu);
+                if(ui_check_resize(&ui)) { ui_draw(&ui,&cpu); continue; } // resize mid-spin: relayout, keep spinning
                 ui_draw(&ui,&cpu);
                 { struct timespec ts = {0, 30000 * 1000}; nanosleep(&ts, nullptr); }
                 int ch=getch();
-                if(ch!=ERR) { nodelay(stdscr,FALSE); break; }
+                if(ch==KEY_RESIZE){ erase(); ui_layout(&ui); continue; } // same, via event
+                if(ch!=ERR) { timeout(500); break; } // any other key stops the spin
             }
-            nodelay(stdscr,FALSE);
+            timeout(500);
             continue;
         }
         // step (store any pending key)
