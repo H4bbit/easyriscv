@@ -1232,7 +1232,7 @@ _start:
     jal ra, loop
     j .               # loop never returns; halt if it ever does
 
-# init + loop subroutines (reference calls jsr init / jsr loop)
+# init + loop subroutines (called once each at startup above)
 init:
     addi sp, sp, -4   # non-leaf: save ra before nested calls (see 07-jumping)
     sw ra, 0(sp)

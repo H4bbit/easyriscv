@@ -516,7 +516,7 @@ function RiscvWidget(node) {
 
     function multiExecute() {
       if (!debug) {
-        for (var w = 0; w < 97; w++) { // prime count, like the reference
+        for (var w = 0; w < 97; w++) { // batch of steps per Run tick
           if (halted) break;
           step();
         }
