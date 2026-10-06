@@ -9,6 +9,9 @@
 'use strict';
 
 function RiscvWidget(node) {
+  var lastWasPutc = false; // message()=line, putc()=stream: first putc after a
+                           // message starts a fresh line so 0x1000 output never
+                           // glues onto the log ("44 bytes.OK").
   var ui = UI();
   var display = Display();
   var memory = Memory();
@@ -506,7 +509,7 @@ function RiscvWidget(node) {
       step();
       if (halted || (!codeRunning && !debugging)) {
         stop();
-        message('\nHalted at PC=0x' + pc.toString(16));
+        message('Halted at PC=0x' + pc.toString(16));
         ui.stop();
       }
     }
@@ -519,7 +522,7 @@ function RiscvWidget(node) {
         }
         if (halted) {
           stop();
-          message('\nHalted at PC=0x' + pc.toString(16));
+          message('Halted at PC=0x' + pc.toString(16));
           ui.stop();
         }
       }
@@ -1346,12 +1349,14 @@ function RiscvWidget(node) {
   function message(text) {
     var box = node.querySelector('.messages code');
     box.textContent += (box.textContent ? '\n' : '') + text;
+    lastWasPutc = false;
     box.parentNode.scrollTop = 100000;
   }
 
   function setMessages(text) {
     var box = node.querySelector('.messages code');
     box.textContent = text;
+    lastWasPutc = false;
   }
 
   function setMonitor(text) {
@@ -1361,7 +1366,15 @@ function RiscvWidget(node) {
 
   function putc(ch) {
     var box = node.querySelector('.messages code');
+    // First char after a message() line starts on a fresh line so program
+    // output (0x1000) never glues onto the assemble log ("44 bytes.OK").
+    // Later chars append raw: a program printing "OK" stays "OK", not
+    // "O\nK". message() resets the flag via lastWasPutc = false.
+    if (!lastWasPutc && box.textContent && !box.textContent.endsWith('\n')) {
+      box.textContent += '\n';
+    }
     box.textContent += ch;
+    lastWasPutc = true;
     box.parentNode.scrollTop = 100000;
   }
 
