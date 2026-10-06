@@ -29,20 +29,27 @@ jobs:
       - name: Run all labs headless
         run: just all
   gcc-14:
-    # Portability probe: vm+asm build and run under gcc-14 (noble
-    # universe, C23 constexpr since gcc-13). Exercises the CC=
-    # override Justfile promises. No reference toolchain here on
-    # purpose: check-asm/disasm ground truth stays clang-21-only in
-    # build-and-labs; this job proves gcc builds and runs the labs.
+    # Portability probe: host vm+asm build and run under gcc-14 (noble
+    # universe, C23 constexpr since gcc-13) + full GNU RISC-V reference
+    # toolchain (gcc-riscv64-unknown-elf 13.2 + binutils, noble universe).
+    # Exercises the CC=/RISCV_CC=/OBJCOPY=/OBJDUMP=/READELF= overrides
+    # Justfile promises; clang-21 stays the default reference.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q gcc-14 just libncursesw6 libncurses-dev
+          sudo apt-get install -y -q gcc-14 gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf just libncursesw6 libncurses-dev
           echo "CC=gcc-14" >> "$GITHUB_ENV"
+          echo "RISCV_CC=riscv64-unknown-elf-gcc" >> "$GITHUB_ENV"
+          echo "RISCV_FLAGS=-march=rv32i -mabi=ilp32 -nostdlib -Wl,-T,riscv.ld" >> "$GITHUB_ENV"
+          echo "OBJCOPY=riscv64-unknown-elf-objcopy" >> "$GITHUB_ENV"
+          echo "OBJDUMP=riscv64-unknown-elf-objdump" >> "$GITHUB_ENV"
+          echo "READELF=riscv64-unknown-elf-readelf" >> "$GITHUB_ENV"
       - name: Build VM (gcc-14)
         run: just build
+      - name: Cross-check assembler (./asm vs GNU riscv64-unknown-elf)
+        run: just check-asm
       - name: Run all labs headless (gcc-14 build)
         run: just all
